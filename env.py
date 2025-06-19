@@ -1,5 +1,9 @@
-# KEEP THIS FILE OUT OF VCS
-TELEGRAM_TOKEN = "PASTE_YOUR_TELEGRAM_TOKEN_HERE"
-OPENAI_API_KEY = "PASTE_YOUR_OPENAI_KEY_HERE"
-OPENAI_BASE_URL = "https://api.proxyapi.ru/openai/v1"
-OPENAI_MODEL = "gpt-4.1"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.proxyapi.ru/openai/v1")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
