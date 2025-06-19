@@ -16,7 +16,9 @@ class GptClient:
 
     def __init__(self) -> None:
         self._client = openai.Client(
-            base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY
+            base_url=OPENAI_BASE_URL,
+            api_key=OPENAI_API_KEY,
+            max_retries=3,
         )
 
     def ask_gpt(self, user_text: str) -> str:
@@ -29,7 +31,6 @@ class GptClient:
                 model=OPENAI_MODEL,
                 messages=messages,
                 timeout=30,
-                max_retries=3,
             )
             content = response.choices[0].message.content
             logging.info("GPT success")
