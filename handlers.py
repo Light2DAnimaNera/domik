@@ -3,6 +3,7 @@ import telebot
 from gpt_client import GptClient
 from models import add_user_if_not_exists, get_all_users
 from env import ADMIN_USERNAME
+from bot_commands import build_commands_keyboard
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
@@ -10,7 +11,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def cmd_start(message: telebot.types.Message) -> None:
         add_user_if_not_exists(message)
         first_name = message.from_user.first_name
-        bot.send_message(message.chat.id, f"Добро пожаловать, {first_name}")
+        keyboard = build_commands_keyboard()
+        bot.send_message(
+            message.chat.id,
+            f"Добро пожаловать, {first_name}",
+            reply_markup=keyboard,
+        )
 
     @bot.message_handler(commands=["all_users"])
     def cmd_all_users(message: telebot.types.Message) -> None:
