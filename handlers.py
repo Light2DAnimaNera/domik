@@ -1,8 +1,12 @@
 import telebot
 
-from gpt_client import GptClient
+from gpt_client import ask_gpt, GptClient
 from models import add_user_if_not_exists, get_all_users
 from env import ADMIN_USERNAME
+from session_manager import SessionManager
+from message_logger import MessageLogger
+from summarizer import make_summary
+from config import MODEL_NAME, SYSTEM_PROMPT
 
 def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["start"])
@@ -24,9 +28,28 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             lines.append(f"- @{username} — {date_joined}")
         bot.send_message(message.chat.id, "\n".join(lines))
 
+    @bot.message_handler(commands=["begin"])
+    def cmd_begin(message: telebot.types.Message) -> None:
+        SessionManager.start(message.from_user)
+        bot.send_message(message.chat.id, "Сессия начата.")
+
+    @bot.message_handler(commands=["end"])
+    def cmd_end(message: telebot.types.Message) -> None:
+        row = SessionManager.active(message.from_user.id)
+        if not row:
+            bot.send_message(message.chat.id, "Нет активной сессии.")
+            return
+        summary = make_summary(row["id"])
+        SessionManager.close(message.from_user.id, summary)
+        bot.send_message(message.chat.id, "Сессия завершена.")
+
     @bot.message_handler(content_types=["text"])
     def text_handler(message: telebot.types.Message) -> None:
         if message.text.startswith("/"):
             return
-        answer = GptClient().ask_gpt(message.text)
+        sid = SessionManager.ensure(message.from_user)
+        MessageLogger.log(sid, "user", message.text)
+        context = MessageLogger.context(sid)
+        answer = ask_gpt(context, message.text, MODEL_NAME, SYSTEM_PROMPT)
+        MessageLogger.log(sid, "assistant", answer)
         bot.send_message(message.chat.id, answer)

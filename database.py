@@ -1,42 +1,48 @@
-import os
 import sqlite3
 
-DB_PATH = "users.db"
+from config import DB_PATH
 
 def init_db() -> None:
     conn = None
     try:
-        db_exists = os.path.isfile(DB_PATH)
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
-        if not db_exists:
-            cursor.execute(
-                """
-                CREATE TABLE users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id INTEGER UNIQUE,
-                    username TEXT,
-                    first_name TEXT,
-                    date_joined TEXT
-                )
-                """
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id INTEGER UNIQUE,
+                username TEXT,
+                first_name TEXT,
+                date_joined TEXT
             )
-        else:
-            cursor.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id INTEGER,
+                idx INTEGER,
+                date_start TEXT,
+                date_end TEXT,
+                summary TEXT,
+                active INTEGER DEFAULT 1
             )
-            if not cursor.fetchone():
-                cursor.execute(
-                    """
-                    CREATE TABLE users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        telegram_id INTEGER UNIQUE,
-                        username TEXT,
-                        first_name TEXT,
-                        date_joined TEXT
-                    )
-                    """
-                )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                role TEXT,
+                content TEXT,
+                created TEXT
+            )
+            """
+        )
         conn.commit()
     except sqlite3.Error:
         pass

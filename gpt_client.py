@@ -81,3 +81,22 @@ class GptClient:
             logging.warning("GPT error: %s", exc)
             return "Сбой. Повтори запрос"
 
+
+def ask_gpt(context: str, user_text: str, model: str, system_prompt: str) -> str:
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": context},
+        {"role": "user", "content": user_text},
+    ]
+    client = openai.Client(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
+    try:
+        resp = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            timeout=30,
+        )
+        return resp.choices[0].message.content.strip()
+    except openai.OpenAIError as exc:
+        logging.warning("GPT error: %s", exc)
+        return "Сбой, попробуй позже"
+
