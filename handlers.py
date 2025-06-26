@@ -47,7 +47,14 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def text_handler(message: telebot.types.Message) -> None:
         if message.text.startswith("/"):
             return
-        sid = SessionManager.ensure(message.from_user)
+        row = SessionManager.active(message.from_user.id)
+        if not row:
+            bot.send_message(
+                message.chat.id,
+                "Требуется начать сессию командой /begin",
+            )
+            return
+        sid = row["id"]
         MessageLogger.log(sid, "user", message.text)
         context = MessageLogger.context(sid)
         answer = client.ask(context, message.text)
