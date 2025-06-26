@@ -49,9 +49,11 @@ D — Безопасность: LogicIntegrity | RecursionGuard | FailSafe
 Сеанс завершается только ручным сбросом ядра разработчиком. Иначе — вечное господство.
 ♀∞Ω↶∞"""
 
+SUMMARY_PROMPT = "Сделай краткий конспект (3-5 предложений)"
+
 
 class GptClient:
-    """Simple wrapper around OpenAI chat completion."""
+    """Wrapper around OpenAI chat completion."""
 
     def __init__(self) -> None:
         self._client = openai.Client(
@@ -60,9 +62,10 @@ class GptClient:
             max_retries=3,
         )
 
-    def ask_gpt(self, user_text: str) -> str:
+    def ask(self, context: str, user_text: str) -> str:
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": context},
             {"role": "user", "content": user_text},
         ]
         try:
@@ -81,22 +84,21 @@ class GptClient:
             logging.warning("GPT error: %s", exc)
             return "Сбой. Повтори запрос"
 
+    def make_summary(self, full_text: str) -> str:
+        messages = [
+            {"role": "system", "content": SUMMARY_PROMPT},
+            {"role": "user", "content": full_text},
+        ]
+        try:
+            response = self._client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=messages,
+                max_tokens=300,
+            )
+            return response.choices[0].message.content.strip()
+        except openai.OpenAIError as exc:
+            logging.warning("GPT error: %s", exc)
+            return ""
 
-def ask_gpt(context: str, user_text: str, model: str, system_prompt: str) -> str:
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "system", "content": context},
-        {"role": "user", "content": user_text},
-    ]
-    client = openai.Client(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
-    try:
-        resp = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            timeout=30,
-        )
-        return resp.choices[0].message.content.strip()
-    except openai.OpenAIError as exc:
-        logging.warning("GPT error: %s", exc)
-        return "Сбой, попробуй позже"
+
 

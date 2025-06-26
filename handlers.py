@@ -1,12 +1,12 @@
 import telebot
 
-from gpt_client import ask_gpt, GptClient
+from gpt_client import GptClient
 from models import add_user_if_not_exists, get_all_users
 from env import ADMIN_USERNAME
 from session_manager import SessionManager
 from message_logger import MessageLogger
 from summarizer import make_summary
-from config import MODEL_NAME, SYSTEM_PROMPT
+client = GptClient()
 
 def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["start"])
@@ -50,6 +50,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         sid = SessionManager.ensure(message.from_user)
         MessageLogger.log(sid, "user", message.text)
         context = MessageLogger.context(sid)
-        answer = ask_gpt(context, message.text, MODEL_NAME, SYSTEM_PROMPT)
+        answer = client.ask(context, message.text)
         MessageLogger.log(sid, "assistant", answer)
         bot.send_message(message.chat.id, answer)
