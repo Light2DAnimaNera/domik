@@ -12,14 +12,25 @@ class SessionManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._active = {}
+            cls._instance._closing = set()
         return cls._instance
 
     @staticmethod
     def _now() -> str:
         return datetime.now().isoformat()
 
+    def mark_closing(self, user_id: int) -> None:
+        """Помечает сессию пользователя как завершающуюся."""
+        self._closing.add(user_id)
+
+    def unmark_closing(self, user_id: int) -> None:
+        """Снимает пометку о завершающейся сессии."""
+        self._closing.discard(user_id)
+
     def start(self, user) -> int:
         user_id = user.id
+        if user_id in self._closing:
+            return 0
         conn = get_connection()
         try:
             cursor = conn.cursor()
@@ -55,6 +66,7 @@ class SessionManager:
         row = self.active(user_id)
         if not row:
             return
+        self.unmark_closing(user_id)
         conn = get_connection()
         try:
             conn.execute(

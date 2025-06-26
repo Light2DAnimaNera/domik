@@ -39,6 +39,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if not row:
             bot.send_message(message.chat.id, "Нет активной сессии.")
             return
+        SessionManager.mark_closing(message.from_user.id)
         summary = make_summary(row["id"])
         SessionManager.close(message.from_user.id, summary)
         bot.send_message(message.chat.id, "Сессия завершена.")
