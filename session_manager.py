@@ -29,7 +29,7 @@ class SessionManager:
 
     def start(self, user) -> int:
         user_id = user.id
-        if user_id in self._closing:
+        if user_id in self._closing or self.active(user_id):
             return 0
         conn = get_connection()
         try:
