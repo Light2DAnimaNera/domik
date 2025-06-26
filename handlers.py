@@ -32,7 +32,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def cmd_begin(message: telebot.types.Message) -> None:
         session_id = SessionManager.start(message.from_user)
         if not session_id:
-            bot.send_message(message.chat.id, "подождите , идет обработка данных")
+            bot.send_message(
+                message.chat.id,
+                "Что бы начать новую сессию, заверши предыдущую сессию",
+            )
             return
         bot.send_message(message.chat.id, "Сессия начата.")
 
