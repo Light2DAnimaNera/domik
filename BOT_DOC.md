@@ -32,6 +32,7 @@
 ### `gpt_client.py`
 - Класс `GptClient` — обёртка над API OpenAI.
   - `SYSTEM_PROMPT` — основной промпт для общения с моделью.
+  - `SUMMARY_PROMPT` — инструкции для SessionSummarizer v2.
   - `__init__()` — создаёт клиента OpenAI с параметрами из переменных окружения.
   - `ask(context, user_text)` — отправляет запрос с учётом контекста.
   - `make_summary(full_text)` — формирует краткое резюме переписки.
