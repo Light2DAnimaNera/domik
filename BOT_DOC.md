@@ -56,7 +56,7 @@
   - `context(session_id)` — возвращает историю сообщений в пределах ограничения.
 
 ### `summarizer.py`
-- Функция `make_summary(session_id)` — использует `GptClient` для краткого конспекта сообщений сессии.
+- Функция `make_summary(session_id)` запрашивает из БД роль и текст каждого сообщения (`SELECT role, content ...`) и передаёт их `GptClient` для краткого конспекта сессии.
 
 ### `handlers.py`
 - Функция `register_handlers(bot)` регистрирует обработчики:

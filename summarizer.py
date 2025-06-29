@@ -11,11 +11,11 @@ def make_summary(session_id: int) -> str:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT content FROM messages WHERE session_id=? ORDER BY id",
+            "SELECT role, content FROM messages WHERE session_id=? ORDER BY id",
             (session_id,),
         )
         rows = cursor.fetchall()
-        full_text = "\n".join(row[0] for row in rows)
+        full_text = "\n".join(f"{row[0]}: {row[1]}" for row in rows)
     except sqlite3.Error:
         conn.close()
         return ""
