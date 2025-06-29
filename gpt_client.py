@@ -93,12 +93,22 @@ class GptClient:
             max_retries=3,
         )
 
-    def ask(self, context: str, user_text: str) -> str:
-        messages = [
+    def ask(self, context: str, user_text: str, previous_summary: str = "") -> str:
+        """Send a chat request with optional summary of the previous session."""
+
+        messages = []
+        if previous_summary:
+            block = (
+                "### CONTEXT_PREVIOUS_SESSION_START\n"
+                f"{previous_summary}\n"
+                "### CONTEXT_PREVIOUS_SESSION_END"
+            )
+            messages.append({"role": "system", "content": block})
+        messages.extend([
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "system", "content": context},
             {"role": "user", "content": user_text},
-        ]
+        ])
         try:
             response = self._client.chat.completions.create(
                 model=OPENAI_MODEL,
