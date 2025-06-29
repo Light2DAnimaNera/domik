@@ -65,6 +65,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         sid = row["id"]
         MessageLogger.log(sid, "user", message.text)
         context = MessageLogger.context(sid)
-        answer = client.ask(context, message.text)
+        summary = SessionManager.session_summary(sid)
+        answer = client.ask(context, message.text, summary)
         MessageLogger.log(sid, "assistant", answer)
         bot.send_message(message.chat.id, answer)

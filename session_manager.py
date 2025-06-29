@@ -13,11 +13,32 @@ class SessionManager:
             cls._instance = super().__new__(cls)
             cls._instance._active = {}
             cls._instance._closing = set()
+            cls._instance._summaries = {}
         return cls._instance
 
     @staticmethod
     def _now() -> str:
         return datetime.now().isoformat()
+
+    @staticmethod
+    def _fetch_last_summary(user_id: int) -> str:
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT summary FROM sessions
+                WHERE telegram_id=? AND active=0 AND summary IS NOT NULL
+                ORDER BY id DESC LIMIT 1
+                """,
+                (user_id,),
+            )
+            row = cursor.fetchone()
+            return row[0] if row else ""
+        except sqlite3.Error:
+            return ""
+        finally:
+            conn.close()
 
     def mark_closing(self, user_id: int) -> None:
         """Помечает сессию пользователя как завершающуюся."""
@@ -50,6 +71,7 @@ class SessionManager:
             conn.commit()
             session_id = cursor.lastrowid
             self._active[user_id] = session_id
+            self._summaries[session_id] = self._fetch_last_summary(user_id)
             return session_id
         except sqlite3.Error:
             return 0
@@ -82,7 +104,9 @@ class SessionManager:
             pass
         finally:
             conn.close()
-        self._active.pop(user_id, None)
+        session_id = self._active.pop(user_id, None)
+        if session_id:
+            self._summaries.pop(session_id, None)
 
     def active(self, user_id: int):
         if user_id in self._active:
@@ -120,6 +144,9 @@ class SessionManager:
         finally:
             conn.close()
         return False
+
+    def session_summary(self, session_id: int) -> str:
+        return self._summaries.get(session_id, "")
 
 
 SessionManager = SessionManager()
