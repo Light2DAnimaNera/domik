@@ -6,7 +6,7 @@ from gpt_client import GptClient
 client = GptClient()
 
 
-def make_summary(session_id: int) -> str:
+def make_summary(session_id: int) -> tuple[str, str]:
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -18,9 +18,10 @@ def make_summary(session_id: int) -> str:
         full_text = "\n".join(f"{row[0]}: {row[1]}" for row in rows)
     except sqlite3.Error:
         conn.close()
-        return ""
+        return "", ""
     conn.close()
     try:
-        return client.make_summary(full_text)
+        summary = client.make_summary(full_text)
     except Exception:
-        return ""
+        summary = ""
+    return summary, full_text
