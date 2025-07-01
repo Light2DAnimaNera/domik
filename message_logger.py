@@ -1,6 +1,11 @@
 import sqlite3
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+try:
+    from zoneinfo import ZoneInfo
+    MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+except Exception:  # pragma: no cover - fallback for older Python
+    MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 from config import CONTEXT_LIMIT
 from database import get_connection
@@ -18,7 +23,12 @@ class MessageLogger:
                 INSERT INTO messages (session_id, role, content, created)
                 VALUES (?, ?, ?, ?)
                 """,
-                (session_id, role, content, datetime.now().isoformat()),
+                (
+                    session_id,
+                    role,
+                    content,
+                    datetime.now(MOSCOW_TZ).strftime("%m-%d-%y %H:%M:%S UTC%z"),
+                ),
             )
             conn.commit()
         except sqlite3.Error:

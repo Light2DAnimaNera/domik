@@ -73,7 +73,8 @@
 
 ### `message_logger.py`
 - Класс `MessageLogger` сохраняет сообщения и формирует контекст диалога:
-  - `log(session_id, role, content)` — пишет сообщение в базу и кэш;
+  - `log(session_id, role, content)` — пишет сообщение в базу и кэш. В колонку
+    `created` записывает дату и время в формате `mm-dd-yy HH:MM:SS UTC+0300` (московское время);
   - `context(session_id)` — возвращает историю сообщений в пределах ограничения.
 
 ### `summarizer.py`
