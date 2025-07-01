@@ -2,6 +2,13 @@ import telebot
 
 from gpt_client import GptClient
 from models import add_user_if_not_exists, get_all_users
+from credits import (
+    charge_user,
+    get_balance,
+    get_today_spent,
+    set_token_coeff,
+    InsufficientCreditsError,
+)
 from env import ADMIN_USERNAME
 from session_manager import SessionManager
 from message_logger import MessageLogger
@@ -27,6 +34,31 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         for username, date_joined in users:
             lines.append(f"- @{username} — {date_joined}")
         bot.send_message(message.chat.id, "\n".join(lines))
+
+    @bot.message_handler(commands=["balance"])
+    def cmd_balance(message: telebot.types.Message) -> None:
+        bal = get_balance(message.from_user.id)
+        spent = get_today_spent(message.from_user.id)
+        bot.send_message(
+            message.chat.id,
+            f"\U0001F4B3 Баланс: {bal:.4f} \u20A1\nИспользовано сегодня: {spent:.4f} \u20A1",
+        )
+
+    @bot.message_handler(commands=["set_coeff"])
+    def cmd_set_coeff(message: telebot.types.Message) -> None:
+        if message.from_user.username != ADMIN_USERNAME:
+            return
+        parts = message.text.split()
+        if len(parts) != 2:
+            bot.send_message(message.chat.id, "Использование: /set_coeff <value>")
+            return
+        try:
+            val = float(parts[1])
+            set_token_coeff(val)
+        except ValueError:
+            bot.send_message(message.chat.id, "Некорректное значение")
+            return
+        bot.send_message(message.chat.id, f"Коэффициент обновлён: {val}")
 
     @bot.message_handler(commands=["begin"])
     def cmd_begin(message: telebot.types.Message) -> None:
@@ -66,6 +98,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         MessageLogger.log(sid, "user", message.text)
         context = MessageLogger.context(sid)
         summary = SessionManager.session_summary(sid)
-        answer = client.ask(context, message.text, summary)
+        answer, usage = client.ask(context, message.text, summary)
+        try:
+            tokens = usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
+            charge_user(message.from_user.id, tokens)
+        except InsufficientCreditsError:
+            bot.send_message(message.chat.id, "Недостаточно средств. Пополните счёт")
+            return
         MessageLogger.log(sid, "assistant", answer)
         bot.send_message(message.chat.id, answer)

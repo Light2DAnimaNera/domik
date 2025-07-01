@@ -93,8 +93,13 @@ class GptClient:
             max_retries=3,
         )
 
-    def ask(self, context: str, user_text: str, previous_summary: str = "") -> str:
-        """Send a chat request with optional summary of the previous session."""
+    def ask(
+        self, context: str, user_text: str, previous_summary: str = ""
+    ) -> tuple[str, dict]:
+        """Send a chat request with optional summary of the previous session.
+
+        Returns a tuple of assistant reply and usage information.
+        """
 
         messages = []
         if previous_summary:
@@ -116,14 +121,19 @@ class GptClient:
                 timeout=30,
             )
             content = response.choices[0].message.content
+            usage = getattr(response, "usage", None)
+            if usage and hasattr(usage, "model_dump"):
+                usage = usage.model_dump()
+            elif usage is None:
+                usage = {}
             logging.info("GPT success")
-            return content
-        except openai.OpenAIError as exc:
+            return content, usage
+        except Exception as exc:
             if hasattr(exc, "status_code") and 400 <= exc.status_code < 500:
                 logging.warning("GPT client error: %s", exc)
-                return "Сбой. Повтори запрос"
+                return "Сбой. Повтори запрос", {}
             logging.warning("GPT error: %s", exc)
-            return "Сбой. Повтори запрос"
+            return "Сбой. Повтори запрос", {}
 
     def make_summary(self, full_text: str) -> str:
         messages = [
@@ -137,7 +147,7 @@ class GptClient:
                 max_tokens=300,
             )
             return response.choices[0].message.content.strip()
-        except openai.OpenAIError as exc:
+        except Exception as exc:
             logging.warning("GPT error: %s", exc)
             return ""
 
