@@ -3,6 +3,7 @@ import sqlite3
 import telebot
 
 from database import get_connection
+from config import INITIAL_CREDITS
 
 
 def add_user_if_not_exists(message: telebot.types.Message) -> None:
@@ -20,10 +21,10 @@ def add_user_if_not_exists(message: telebot.types.Message) -> None:
             date_joined = datetime.now().date().isoformat()
             cursor.execute(
                 """
-                INSERT INTO users (telegram_id, username, first_name, date_joined)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO users (telegram_id, username, first_name, date_joined, credits)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (telegram_id, username, first_name, date_joined),
+                (telegram_id, username, first_name, date_joined, INITIAL_CREDITS),
             )
             conn.commit()
     except sqlite3.Error:
