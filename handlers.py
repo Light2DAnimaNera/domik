@@ -6,6 +6,7 @@ from credits import (
     charge_user,
     get_balance,
     get_today_spent,
+    get_token_coeff,
     set_token_coeff,
     InsufficientCreditsError,
 )
@@ -49,6 +50,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             message.chat.id,
             f"\U0001F4B3 Баланс: {bal:.4f} \u20A1\nИспользовано сегодня: {spent:.4f} \u20A1",
         )
+
+    @bot.message_handler(commands=["coeff"])
+    def cmd_coeff(message: telebot.types.Message) -> None:
+        coeff = get_token_coeff()
+        bot.send_message(message.chat.id, f"Текущий коэффициент: {coeff}")
 
     @bot.message_handler(commands=["set_coeff"])
     def cmd_set_coeff(message: telebot.types.Message) -> None:
