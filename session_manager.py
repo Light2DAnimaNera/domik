@@ -102,17 +102,21 @@ class SessionManager:
                 continue
             from summarizer import make_summary
             summary, _ = make_summary(row["id"])
-            self.close(uid, summary)
+            end_time = self.close(uid, summary)
             try:
-                bot.send_message(uid, "Сессия завершена из-за простоя.")
+                if end_time:
+                    bot.send_message(uid, f"Сессия завершена из-за простоя. Дата завершения: {end_time}")
+                else:
+                    bot.send_message(uid, "Сессия завершена из-за простоя.")
             except Exception:
                 pass
 
-    def close(self, user_id: int, summary: str | None = None) -> None:
+    def close(self, user_id: int, summary: str | None = None) -> str | None:
         row = self.active(user_id)
         if not row:
-            return
+            return None
         self.unmark_closing(user_id)
+        end_time = self._now()
         conn = get_connection()
         try:
             conn.execute(
@@ -121,7 +125,7 @@ class SessionManager:
                 SET date_end=?, summary=?, active=0
                 WHERE id=?
                 """,
-                (self._now(), summary, row["id"]),
+                (end_time, summary, row["id"]),
             )
             conn.commit()
         except sqlite3.Error:
@@ -132,6 +136,7 @@ class SessionManager:
         if session_id:
             self._summaries.pop(session_id, None)
         self._activity.pop(user_id, None)
+        return end_time
 
     def active(self, user_id: int):
         if user_id in self._active:

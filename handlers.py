@@ -98,9 +98,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         SessionManager.mark_closing(message.from_user.id)
         summary, full_text = make_summary(row["id"])
-        SessionManager.close(message.from_user.id, summary)
+        end_time = SessionManager.close(message.from_user.id, summary)
         print(full_text)
-        bot.send_message(message.chat.id, "Сессия завершена.")
+        if end_time:
+            bot.send_message(message.chat.id, f"Сессия завершена. Дата завершения: {end_time}")
+        else:
+            bot.send_message(message.chat.id, "Сессия завершена.")
 
     @bot.message_handler(content_types=["text"])
     def text_handler(message: telebot.types.Message) -> None:
