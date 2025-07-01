@@ -13,6 +13,7 @@ from env import ADMIN_USERNAME
 from session_manager import SessionManager
 from message_logger import MessageLogger
 from summarizer import make_summary
+from bot_commands import setup_default_commands
 client = GptClient()
 
 def register_handlers(bot: telebot.TeleBot) -> None:
@@ -23,6 +24,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bot.send_message(
             message.chat.id,
             f"Добро пожаловать, {first_name}",
+        )
+        setup_default_commands(
+            bot,
+            chat_id=message.chat.id,
+            username=message.from_user.username,
         )
 
     @bot.message_handler(commands=["all_users"])
