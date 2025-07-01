@@ -53,6 +53,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
     @bot.message_handler(commands=["coeff"])
     def cmd_coeff(message: telebot.types.Message) -> None:
+        if message.from_user.username != ADMIN_USERNAME:
+            return
         coeff = get_token_coeff()
         bot.send_message(message.chat.id, f"Текущий коэффициент: {coeff}")
 
