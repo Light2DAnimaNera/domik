@@ -81,9 +81,11 @@ def _update_daily_usage(conn: sqlite3.Connection, user_id: int, cost: float) -> 
     )
 
 
-def charge_user(user_id: int, used_tokens: int) -> None:
+def charge_user(user_id: int, prompt_tokens: int, completion_tokens: int) -> None:
+    """Charge user for used tokens and log separate values."""
+    total_tokens = prompt_tokens + completion_tokens
     coeff = get_token_coeff()
-    cost = used_tokens * coeff
+    cost = total_tokens * coeff
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -108,8 +110,9 @@ def charge_user(user_id: int, used_tokens: int) -> None:
     finally:
         conn.close()
     print(
-        f"User {user_id} spent {used_tokens} tokens "
-        f"({cost:.4f} \u20A1). New balance: {new_balance:.4f} \u20A1"
+        f"User {user_id} spent {prompt_tokens} prompt and {completion_tokens} "
+        f"completion tokens ({total_tokens} total, {cost:.4f} \u20A1). "
+        f"New balance: {new_balance:.4f} \u20A1"
     )
 
 
