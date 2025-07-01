@@ -1,5 +1,6 @@
 import sqlite3
 from datetime import datetime
+import time
 
 from config import DB_PATH
 from database import get_connection
@@ -14,6 +15,7 @@ class SessionManager:
             cls._instance._active = {}
             cls._instance._closing = set()
             cls._instance._summaries = {}
+            cls._instance._activity = {}
         return cls._instance
 
     @staticmethod
@@ -72,6 +74,7 @@ class SessionManager:
             session_id = cursor.lastrowid
             self._active[user_id] = session_id
             self._summaries[session_id] = self._fetch_last_summary(user_id)
+            self._activity[user_id] = time.time()
             return session_id
         except sqlite3.Error:
             return 0
@@ -83,6 +86,27 @@ class SessionManager:
         if row:
             return row["id"]
         return self.start(user)
+
+    def update_activity(self, user_id: int) -> None:
+        """Обновляет время последней активности пользователя."""
+        if user_id in self._active:
+            self._activity[user_id] = time.time()
+
+    def expire_idle(self, bot, timeout: int) -> None:
+        """Закрывает сессии, простаивавшие дольше `timeout` секунд."""
+        now = time.time()
+        to_close = [uid for uid, ts in self._activity.items() if now - ts > timeout]
+        for uid in to_close:
+            row = self.active(uid)
+            if not row:
+                continue
+            from summarizer import make_summary
+            summary, _ = make_summary(row["id"])
+            self.close(uid, summary)
+            try:
+                bot.send_message(uid, "Сессия завершена из-за простоя.")
+            except Exception:
+                pass
 
     def close(self, user_id: int, summary: str | None = None) -> None:
         row = self.active(user_id)
@@ -107,6 +131,7 @@ class SessionManager:
         session_id = self._active.pop(user_id, None)
         if session_id:
             self._summaries.pop(session_id, None)
+        self._activity.pop(user_id, None)
 
     def active(self, user_id: int):
         if user_id in self._active:

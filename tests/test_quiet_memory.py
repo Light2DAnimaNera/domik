@@ -28,6 +28,12 @@ class DummyUser:
 
 
 def test_previous_summary_exists(monkeypatch):
+    class DummyClient:
+        def __init__(self, *args, **kwargs):
+            self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=lambda *a, **kw: types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content='ok'))])))
+
+    dummy_openai = types.SimpleNamespace(Client=DummyClient)
+    monkeypatch.setitem(sys.modules, 'openai', dummy_openai)
     from database import get_connection
     from session_manager import SessionManager
     import gpt_client
@@ -65,6 +71,12 @@ def test_previous_summary_exists(monkeypatch):
 
 
 def test_no_previous_summary(monkeypatch):
+    class DummyClient:
+        def __init__(self, *args, **kwargs):
+            self.chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=lambda *a, **kw: types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content='ok'))])))
+
+    dummy_openai = types.SimpleNamespace(Client=DummyClient)
+    monkeypatch.setitem(sys.modules, 'openai', dummy_openai)
     from session_manager import SessionManager
     import gpt_client
 
