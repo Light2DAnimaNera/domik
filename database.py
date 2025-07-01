@@ -15,10 +15,20 @@ def init_db() -> None:
                 telegram_id INTEGER UNIQUE,
                 username TEXT,
                 first_name TEXT,
-                date_joined TEXT
+                date_joined TEXT,
+                credits DECIMAL(16,4) NOT NULL DEFAULT 0,
+                updated_at TEXT
             )
             """
         )
+        cursor.execute("PRAGMA table_info(users)")
+        cols = [r[1] for r in cursor.fetchall()]
+        if "credits" not in cols:
+            cursor.execute(
+                "ALTER TABLE users ADD COLUMN credits DECIMAL(16,4) NOT NULL DEFAULT 0"
+            )
+        if "updated_at" not in cols:
+            cursor.execute("ALTER TABLE users ADD COLUMN updated_at TEXT")
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS sessions (
@@ -42,6 +52,39 @@ def init_db() -> None:
                 created TEXT
             )
             """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                key TEXT UNIQUE NOT NULL,
+                value TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS recharge (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                amount DECIMAL(16,4),
+                source TEXT,
+                timestamp TEXT
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS usage_daily (
+                user_id INTEGER,
+                date TEXT,
+                spent DECIMAL(16,4),
+                PRIMARY KEY(user_id, date)
+            )
+            """
+        )
+        cursor.execute(
+            "INSERT OR IGNORE INTO settings(key, value) VALUES('token_cost_coeff', '1.0')"
         )
         conn.commit()
     except sqlite3.Error:
