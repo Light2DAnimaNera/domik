@@ -107,6 +107,10 @@ def charge_user(user_id: int, used_tokens: int) -> None:
         raise
     finally:
         conn.close()
+    print(
+        f"User {user_id} spent {used_tokens} tokens "
+        f"({cost:.4f} \u20A1). New balance: {new_balance:.4f} \u20A1"
+    )
 
 
 def get_balance(user_id: int) -> float:
