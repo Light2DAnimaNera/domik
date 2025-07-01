@@ -119,8 +119,9 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         summary = SessionManager.session_summary(sid)
         answer, usage = client.ask(context, message.text, summary)
         try:
-            tokens = usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
-            charge_user(message.from_user.id, tokens)
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            charge_user(message.from_user.id, prompt_tokens, completion_tokens)
         except InsufficientCreditsError:
             bot.send_message(message.chat.id, "Недостаточно средств. Пополните счёт")
             return
