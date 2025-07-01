@@ -1,5 +1,10 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+try:
+    from zoneinfo import ZoneInfo
+    MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+except Exception:  # pragma: no cover - fallback for older Python
+    MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 import time
 
 from config import DB_PATH
@@ -20,7 +25,7 @@ class SessionManager:
 
     @staticmethod
     def _now() -> str:
-        return datetime.now().isoformat()
+        return datetime.now(MOSCOW_TZ).strftime("%H:%M UTC%z, %m-%d-%y")
 
     @staticmethod
     def _fetch_last_summary(user_id: int) -> str:
@@ -104,10 +109,7 @@ class SessionManager:
             summary, _ = make_summary(row["id"])
             end_time = self.close(uid, summary)
             try:
-                if end_time:
-                    bot.send_message(uid, f"Сессия завершена из-за простоя. Дата завершения: {end_time}")
-                else:
-                    bot.send_message(uid, "Сессия завершена из-за простоя.")
+                bot.send_message(uid, "Сессия завершена из-за простоя.")
             except Exception:
                 pass
 
