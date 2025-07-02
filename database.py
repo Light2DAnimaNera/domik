@@ -18,7 +18,7 @@ def init_db() -> None:
                 date_joined TEXT,
                 credits DECIMAL(16,4) NOT NULL DEFAULT 0,
                 updated_at TEXT,
-                blocked INTEGER NOT NULL DEFAULT 1
+                blocked INTEGER NOT NULL DEFAULT 0
             )
             """
         )
@@ -32,7 +32,7 @@ def init_db() -> None:
             cursor.execute("ALTER TABLE users ADD COLUMN updated_at TEXT")
         if "blocked" not in cols:
             cursor.execute(
-                "ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 1"
+                "ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0"
             )
         cursor.execute(
             """
