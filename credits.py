@@ -5,6 +5,7 @@ import time
 from datetime import datetime, date
 
 from database import get_connection
+from config import CURRENCY_SYMBOL
 
 
 class InsufficientCreditsError(Exception):
@@ -119,8 +120,8 @@ def charge_user(user_id: int, prompt_tokens: int, completion_tokens: int) -> Non
         conn.close()
     print(
         f"User {user_id} spent {prompt_tokens} prompt and {completion_tokens} "
-        f"completion tokens ({total_tokens} total, {cost:.4f} \u20A1). "
-        f"New balance: {new_balance:.4f} \u20A1"
+        f"completion tokens ({total_tokens} total, {cost:.4f} {CURRENCY_SYMBOL}). "
+        f"New balance: {new_balance:.4f} {CURRENCY_SYMBOL}"
     )
 
 

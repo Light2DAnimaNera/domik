@@ -16,6 +16,7 @@ from session_manager import SessionManager
 from message_logger import MessageLogger
 from summarizer import make_summary
 from bot_commands import setup_default_commands
+from config import CURRENCY_SYMBOL
 client = GptClient()
 
 def register_handlers(bot: telebot.TeleBot) -> None:
@@ -49,10 +50,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bal_ceil = math.ceil(bal * 100) / 100
         spent = get_today_spent(message.from_user.id)
         spent_ceil = math.ceil(spent * 100) / 100
-        bot.send_message(
-            message.chat.id,
-            f"\U0001F4B3 Баланс: {bal_ceil:.2f} \u20A1\nИспользовано сегодня: {spent_ceil:.2f} \u20A1",
-        )
+            bot.send_message(
+                message.chat.id,
+                f"\U0001F4B3 Баланс: {bal_ceil:.2f} {CURRENCY_SYMBOL}\n"
+                f"Использовано сегодня: {spent_ceil:.2f} {CURRENCY_SYMBOL}",
+            )
 
     @bot.message_handler(commands=["coeff"])
     def cmd_coeff(message: telebot.types.Message) -> None:
