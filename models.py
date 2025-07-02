@@ -21,8 +21,8 @@ def add_user_if_not_exists(message: telebot.types.Message) -> None:
             date_joined = datetime.now().date().isoformat()
             cursor.execute(
                 """
-                INSERT INTO users (telegram_id, username, first_name, date_joined, credits)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO users (telegram_id, username, first_name, date_joined, credits, blocked)
+                VALUES (?, ?, ?, ?, ?, 1)
                 """,
                 (telegram_id, username, first_name, date_joined, INITIAL_CREDITS),
             )
@@ -43,5 +43,32 @@ def get_all_users() -> list[tuple]:
         return cursor.fetchall()
     except sqlite3.Error:
         return []
+    finally:
+        conn.close()
+
+
+def set_blocked(user_id: int, blocked: bool) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE users SET blocked=? WHERE telegram_id=?",
+            (1 if blocked else 0, user_id),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        pass
+    finally:
+        conn.close()
+
+
+def is_blocked(user_id: int) -> bool:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT blocked FROM users WHERE telegram_id=?", (user_id,))
+        row = cursor.fetchone()
+        return bool(row[0]) if row else False
+    except sqlite3.Error:
+        return False
     finally:
         conn.close()

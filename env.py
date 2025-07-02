@@ -1,5 +1,9 @@
 import os
-from dotenv import load_dotenv
+
+try:  # python-dotenv might be missing during tests
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - optional dependency
+    load_dotenv = lambda: None
 
 load_dotenv()
 

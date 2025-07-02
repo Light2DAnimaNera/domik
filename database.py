@@ -17,7 +17,8 @@ def init_db() -> None:
                 first_name TEXT,
                 date_joined TEXT,
                 credits DECIMAL(16,4) NOT NULL DEFAULT 0,
-                updated_at TEXT
+                updated_at TEXT,
+                blocked INTEGER NOT NULL DEFAULT 1
             )
             """
         )
@@ -29,6 +30,10 @@ def init_db() -> None:
             )
         if "updated_at" not in cols:
             cursor.execute("ALTER TABLE users ADD COLUMN updated_at TEXT")
+        if "blocked" not in cols:
+            cursor.execute(
+                "ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 1"
+            )
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS sessions (
