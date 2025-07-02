@@ -13,6 +13,10 @@ class InsufficientCreditsError(Exception):
 
 _cache: dict[str, tuple[float, float]] = {}
 
+# Token prices per 1 unit (before applying coefficient)
+REQUEST_TOKEN_PRICE = 0.0005
+RESPONSE_TOKEN_PRICE = 0.0019
+
 def _get_setting(key: str) -> str:
     now = time.time()
     if key in _cache:
@@ -83,9 +87,11 @@ def _update_daily_usage(conn: sqlite3.Connection, user_id: int, cost: float) -> 
 
 def charge_user(user_id: int, prompt_tokens: int, completion_tokens: int) -> None:
     """Charge user for used tokens and log separate values."""
-    total_tokens = prompt_tokens + completion_tokens
     coeff = get_token_coeff()
-    cost = total_tokens * coeff
+    cost_per_prompt = REQUEST_TOKEN_PRICE * prompt_tokens
+    cost_per_completion = RESPONSE_TOKEN_PRICE * completion_tokens
+    cost = (cost_per_prompt + cost_per_completion) * coeff
+    total_tokens = prompt_tokens + completion_tokens
     conn = get_connection()
     try:
         cursor = conn.cursor()
