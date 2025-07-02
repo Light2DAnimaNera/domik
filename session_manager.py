@@ -25,7 +25,7 @@ class SessionManager:
 
     @staticmethod
     def _now() -> str:
-        return datetime.now(MOSCOW_TZ).strftime("%H:%M UTC%z, %m-%d-%y")
+        return datetime.now(MOSCOW_TZ).strftime("%m-%d-%y %H-%M")
 
     @staticmethod
     def _fetch_last_summary(user_id: int) -> str:

@@ -27,7 +27,7 @@ class MessageLogger:
                     session_id,
                     role,
                     content,
-                    datetime.now(MOSCOW_TZ).strftime("%m-%d-%y %H:%M:%S UTC%z"),
+                    datetime.now(MOSCOW_TZ).strftime("%m-%d-%y %H-%M"),
                 ),
             )
             conn.commit()
