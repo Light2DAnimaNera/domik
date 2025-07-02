@@ -48,9 +48,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bal = get_balance(message.from_user.id)
         bal_ceil = math.ceil(bal * 100) / 100
         spent = get_today_spent(message.from_user.id)
+        spent_ceil = math.ceil(spent * 100) / 100
         bot.send_message(
             message.chat.id,
-            f"\U0001F4B3 Баланс: {bal_ceil:.2f} \u20A1\nИспользовано сегодня: {spent:.4f} \u20A1",
+            f"\U0001F4B3 Баланс: {bal_ceil:.2f} \u20A1\nИспользовано сегодня: {spent_ceil:.2f} \u20A1",
         )
 
     @bot.message_handler(commands=["coeff"])
