@@ -22,7 +22,7 @@ def add_user_if_not_exists(message: telebot.types.Message) -> None:
             cursor.execute(
                 """
                 INSERT INTO users (telegram_id, username, first_name, date_joined, credits, blocked)
-                VALUES (?, ?, ?, ?, ?, 1)
+                VALUES (?, ?, ?, ?, ?, 0)
                 """,
                 (telegram_id, username, first_name, date_joined, INITIAL_CREDITS),
             )
