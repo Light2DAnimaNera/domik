@@ -1,4 +1,5 @@
 import telebot
+import math
 
 from gpt_client import GptClient
 from models import add_user_if_not_exists, get_all_users
@@ -45,10 +46,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["balance"])
     def cmd_balance(message: telebot.types.Message) -> None:
         bal = get_balance(message.from_user.id)
+        bal_ceil = math.ceil(bal * 100) / 100
         spent = get_today_spent(message.from_user.id)
         bot.send_message(
             message.chat.id,
-            f"\U0001F4B3 Баланс: {bal:.4f} \u20A1\nИспользовано сегодня: {spent:.4f} \u20A1",
+            f"\U0001F4B3 Баланс: {bal_ceil:.2f} \u20A1\nИспользовано сегодня: {spent:.4f} \u20A1",
         )
 
     @bot.message_handler(commands=["coeff"])
