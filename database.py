@@ -84,7 +84,7 @@ def init_db() -> None:
             """
         )
         cursor.execute(
-            "INSERT OR IGNORE INTO settings(key, value) VALUES('token_cost_coeff', '1')"
+            "INSERT OR IGNORE INTO settings(key, value) VALUES('token_cost_coeff', '1.0')"
         )
         conn.commit()
     except sqlite3.Error:

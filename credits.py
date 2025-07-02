@@ -14,8 +14,10 @@ class InsufficientCreditsError(Exception):
 _cache: dict[str, tuple[float, float]] = {}
 
 # Token prices per 1 unit (before applying coefficient)
-REQUEST_TOKEN_PRICE = 0.0005
-RESPONSE_TOKEN_PRICE = 0.0019
+# Cost of a request token
+REQUEST_TOKEN_PRICE = 0.0020
+# Cost of a response token
+RESPONSE_TOKEN_PRICE = 0.0005
 
 def _get_setting(key: str) -> str:
     now = time.time()
