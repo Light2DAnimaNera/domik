@@ -112,10 +112,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         bal = get_balance(message.from_user.id)
         spent = get_today_spent(message.from_user.id)
+        bal_rounded = math.ceil(bal * 100) / 100
+        spent_rounded = math.ceil(spent * 100) / 100
         bot.send_message(
             message.chat.id,
             f"💰 БАЛАНС\n"
-            f"Текущий баланс: {bal:.4f} {CURRENCY_SYMBOL}. Использовано сегодня: {spent:.4f} {CURRENCY_SYMBOL}.",
+            f"Текущий баланс: {bal_rounded:.2f} {CURRENCY_SYMBOL}. Использовано сегодня: {spent_rounded:.2f} {CURRENCY_SYMBOL}.",
         )
 
     @bot.message_handler(commands=["recharge"])
