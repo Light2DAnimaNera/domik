@@ -19,7 +19,7 @@ register_handlers(bot)
 
 def _session_monitor() -> None:
     while True:
-        SessionManager.expire_idle(bot, 60)
+        SessionManager.expire_idle(bot, 600)
         time.sleep(5)
 
 def _stop_bot(*_: object) -> None:

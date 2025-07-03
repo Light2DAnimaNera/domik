@@ -54,10 +54,10 @@ def test_session_expires(monkeypatch):
     assert sid
 
     # Move last activity into the past
-    SessionManager._activity[user.id] = time.time() - 61
+    SessionManager._activity[user.id] = time.time() - 601
 
     bot = DummyBot()
-    SessionManager.expire_idle(bot, 60)
+    SessionManager.expire_idle(bot, 600)
 
     assert not SessionManager.active(user.id)
     assert bot.sent
