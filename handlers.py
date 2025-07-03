@@ -34,12 +34,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
             return
         if exists:
-            markup_main = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-            markup_main.row("/begin", "/help")
             bot.send_message(
                 message.chat.id,
                 f"👋 С ВОЗВРАЩЕНИЕМ  {message.from_user.first_name}",
-                reply_markup=markup_main,
+                reply_markup=telebot.types.ReplyKeyboardRemove(),
             )
             setup_default_commands(
                 bot,
@@ -55,8 +53,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         def _age_reply(answer: telebot.types.Message) -> None:
             if answer.text.lower().startswith("д"):
                 set_blocked(answer.from_user.id, False)
-                markup_main = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-                markup_main.row("/begin", "/help")
                 bot.send_message(
                     answer.chat.id,
                     (
@@ -68,7 +64,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                         "Для старта — /begin\n"
                         "Справка — /help"
                     ),
-                    reply_markup=markup_main,
+                    reply_markup=telebot.types.ReplyKeyboardRemove(),
                 )
                 setup_default_commands(
                     bot,
