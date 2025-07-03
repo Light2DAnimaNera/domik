@@ -127,7 +127,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         parts = message.text.split()
         if len(parts) != 2:
-            bot.send_message(message.chat.id, "Использование: /recharge <amount>")
+            bot.send_message(message.chat.id, "Пополнение баланса сейчас не доступно, за подробностями обратитесь в Telegram: @piecode_help")
             return
         try:
             amount = float(parts[1])
