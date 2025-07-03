@@ -9,6 +9,7 @@ DEFAULT_COMMANDS: list[Tuple[str, str]] = [
     ("begin", "Начать сессию"),
     ("end", "Завершить сессию"),
     ("balance", "Показать баланс"),
+    ("recharge", "Пополнить баланс"),
 ]
 
 ADMIN_COMMANDS: list[Tuple[str, str]] = [
