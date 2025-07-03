@@ -105,6 +105,32 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             f"Использовано сегодня: {spent_ceil:.2f} {CURRENCY_SYMBOL}",
         )
 
+    @bot.message_handler(commands=["recharge"])
+    def cmd_recharge(message: telebot.types.Message) -> None:
+        if is_blocked(message.from_user.id):
+            bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
+            return
+        parts = message.text.split()
+        if len(parts) != 2:
+            bot.send_message(message.chat.id, "Использование: /recharge <amount>")
+            return
+        try:
+            amount = float(parts[1])
+            if amount <= 0:
+                raise ValueError
+        except ValueError:
+            bot.send_message(message.chat.id, "Некорректная сумма")
+            return
+        try:
+            from payment import create_payment_link
+
+            link = create_payment_link(message.from_user.id, amount)
+        except Exception:
+            bot.send_message(message.chat.id, "Сервис оплаты недоступен")
+            return
+
+        bot.send_message(message.chat.id, f"Ссылка для оплаты: {link}")
+
     @bot.message_handler(commands=["coeff"])
     def cmd_coeff(message: telebot.types.Message) -> None:
         if is_blocked(message.from_user.id):
