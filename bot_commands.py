@@ -6,6 +6,7 @@ from env import ADMIN_USERNAME
 
 DEFAULT_COMMANDS: list[Tuple[str, str]] = [
     ("start", "Начать работу с ботом"),
+    ("help", "Справочная информация"),
     ("begin", "Начать сессию"),
     ("end", "Завершить сессию"),
     ("balance", "Показать баланс"),

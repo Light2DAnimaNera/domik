@@ -14,6 +14,9 @@ class ErrorMiddleware(BaseMiddleware):
 
     def post_process(self, message: Message, data, exception):
         if isinstance(exception, InsufficientCreditsError):
-            message.bot.send_message(message.chat.id, 'Недостаточно средств. Пополните счёт')
+            message.bot.send_message(
+                message.chat.id,
+                '🛑 НЕДОСТАТОЧНО СРЕДСТВ\nПополните баланс командой /recharge. Баланс и расход — /balance.'
+            )
             return True
         return False

@@ -131,9 +131,9 @@ class GptClient:
         except Exception as exc:
             if hasattr(exc, "status_code") and 400 <= exc.status_code < 500:
                 logging.warning("GPT client error: %s", exc)
-                return "Сбой. Повтори запрос", {}
+                return "❗ СИСТЕМНЫЙ СБОЙ\nПодождите и повторите запрос.", {}
             logging.warning("GPT error: %s", exc)
-            return "Сбой. Повтори запрос", {}
+            return "❗ СИСТЕМНЫЙ СБОЙ\nПодождите и повторите запрос.", {}
 
     def make_summary(self, full_text: str) -> str:
         messages = [
