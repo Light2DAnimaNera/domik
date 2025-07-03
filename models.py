@@ -72,3 +72,16 @@ def is_blocked(user_id: int) -> bool:
         return False
     finally:
         conn.close()
+
+
+def user_exists(user_id: int) -> bool:
+    """Return True if user is already present in the database."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM users WHERE telegram_id=?", (user_id,))
+        return cursor.fetchone() is not None
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()

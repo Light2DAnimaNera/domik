@@ -7,6 +7,7 @@ from models import (
     get_all_users,
     set_blocked,
     is_blocked,
+    user_exists,
 )
 from credits import (
     charge_user,
@@ -27,9 +28,22 @@ client = GptClient()
 def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["start"])
     def cmd_start(message: telebot.types.Message) -> None:
+        exists = user_exists(message.from_user.id)
         add_user_if_not_exists(message)
         if is_blocked(message.from_user.id):
             bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
+            return
+        if exists:
+            bot.send_message(
+                message.chat.id,
+                "[SYSTEM] ДОБРО ПОЖАЛОВАТЬ",
+                reply_markup=telebot.types.ReplyKeyboardRemove(),
+            )
+            setup_default_commands(
+                bot,
+                chat_id=message.chat.id,
+                username=message.from_user.username,
+            )
             return
 
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
