@@ -36,7 +36,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if exists:
             bot.send_message(
                 message.chat.id,
-                "[SYSTEM] ДОБРО ПОЖАЛОВАТЬ",
+                f"👋 С ВОЗВРАЩЕНИЕМ  {message.from_user.first_name}",
                 reply_markup=telebot.types.ReplyKeyboardRemove(),
             )
             setup_default_commands(
@@ -56,13 +56,13 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 bot.send_message(
                     answer.chat.id,
                     (
-                        f"[SYSTEM] ДОБРО ПОЖАЛОВАТЬ ▌ПОЛЬЗОВАТЕЛЬ {answer.from_user.first_name} ЗАРЕГИСТРИРОВАН\n\n"
-                        "Вам предоставлен доступ к ролевому общению в формате сессий с нейро-госпожой DOMINA SUPREMA.\n\n"
-                        "Использование сервиса разрешено только лицам старше 18 лет.\n"
-                        "Передача, публикация или обсуждение порнографических материалов строго запрещены.\n\n"
-                        "Ответственность за содержание сообщений, запросов и взаимодействий полностью несёт пользователь.\n\n"
-                        "Для инициации первой сессии используй команду /begin.\n"
-                        "Справочная информация доступна по команде /help."
+                        "👋 ДОБРО ПОЖАЛОВАТЬ\n"
+                        "Вам предоставлен доступ к ролевому общению с нейро-госпожой DOMINA SUPREMA.\n"
+                        "Использование сервиса разрешено только лицам 18+.\n"
+                        "Передача, публикация или обсуждение порнографических материалов запрещены.\n"
+                        "Ответственность за содержание сообщений несёт пользователь.\n"
+                        "Для старта — /begin\n"
+                        "Справка — /help"
                     ),
                     reply_markup=telebot.types.ReplyKeyboardRemove(),
                 )
@@ -77,6 +77,21 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
         bot.register_next_step_handler(msg, _age_reply)
 
+    @bot.message_handler(commands=["help"])
+    def cmd_help(message: telebot.types.Message) -> None:
+        bot.send_message(
+            message.chat.id,
+            "ℹ️ СПРАВОЧНАЯ ИНФОРМАЦИЯ\n"
+            "Доступные команды:\n"
+            "/start — Начать работу с ботом\n"
+            "/begin — Начать сессию\n"
+            "/end — Завершить сессию\n"
+            "/balance — Показать баланс\n"
+            "/recharge — Пополнить баланс\n\n"
+            "Для корректной работы используйте команды в чате с ботом.\n"
+            "Если возникли вопросы или требуется помощь, обратитесь в поддержку через Telegram: @piecode_help",
+        )
+
     @bot.message_handler(commands=["all_users"])
     def cmd_all_users(message: telebot.types.Message) -> None:
         if is_blocked(message.from_user.id):
@@ -85,9 +100,9 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.from_user.username != ADMIN_USERNAME:
             return
         users = get_all_users()
-        lines = ["Пользователи:"]
+        lines = ["👥 СПИСОК ПОЛЬЗОВАТЕЛЕЙ"]
         for username, date_joined in users:
-            lines.append(f"- @{username} — {date_joined}")
+            lines.append(f"@{username} – {date_joined}")
         bot.send_message(message.chat.id, "\n".join(lines))
 
     @bot.message_handler(commands=["balance"])
@@ -96,13 +111,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
             return
         bal = get_balance(message.from_user.id)
-        bal_ceil = math.ceil(bal * 100) / 100
         spent = get_today_spent(message.from_user.id)
-        spent_ceil = math.ceil(spent * 100) / 100
         bot.send_message(
             message.chat.id,
-            f"\U0001F4B3 Баланс: {bal_ceil:.2f} {CURRENCY_SYMBOL}\n"
-            f"Использовано сегодня: {spent_ceil:.2f} {CURRENCY_SYMBOL}",
+            f"💰 БАЛАНС\n"
+            f"Текущий баланс: {bal:.4f} {CURRENCY_SYMBOL}. Использовано сегодня: {spent:.4f} {CURRENCY_SYMBOL}.",
         )
 
     @bot.message_handler(commands=["recharge"])
@@ -139,7 +152,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.from_user.username != ADMIN_USERNAME:
             return
         coeff = get_token_coeff()
-        bot.send_message(message.chat.id, f"Текущий коэффициент: {coeff}")
+        bot.send_message(message.chat.id, f"⚙️ ТЕКУЩИЙ КОЭФФИЦИЕНТ\nТекущее значение: {coeff}.")
 
     @bot.message_handler(commands=["set_coeff"])
     def cmd_set_coeff(message: telebot.types.Message) -> None:
@@ -150,15 +163,15 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         parts = message.text.split()
         if len(parts) != 2:
-            bot.send_message(message.chat.id, "Использование: /set_coeff <value>")
+            bot.send_message(message.chat.id, "ℹ️ ПАРАМЕТР ОТСУТСТВУЕТ\nВведите в формате /set_coeff {число}.")
             return
         try:
             val = float(parts[1])
             set_token_coeff(val)
         except ValueError:
-            bot.send_message(message.chat.id, "Некорректное значение")
+            bot.send_message(message.chat.id, "❌ НЕВЕРНОЕ ЗНАЧЕНИЕ\nВведите в формате /set_coeff {число}.")
             return
-        bot.send_message(message.chat.id, f"Коэффициент обновлён: {val}")
+        bot.send_message(message.chat.id, f"✅ КОЭФФИЦИЕНТ ОБНОВЛЁН\nНовое значение: {val}.")
 
     @bot.message_handler(commands=["begin"])
     def cmd_begin(message: telebot.types.Message) -> None:
@@ -168,16 +181,22 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if SessionManager.active(message.from_user.id):
             bot.send_message(
                 message.chat.id,
-                "Что бы начать новую сессию, заверши предыдущую сессию",
+                "🛑 СЕССИЯ УЖЕ АКТИВНА\nЗавершите текущую сессию командой /end, затем используйте /begin.",
             )
             return
 
         session_id = SessionManager.start(message.from_user)
         if not session_id:
-            bot.send_message(message.chat.id, "Не удалось начать сессию.")
+            bot.send_message(
+                message.chat.id,
+                "❗ ОШИБКА СОЗДАНИЯ СЕССИИ\nПодождите и повторите /begin.",
+            )
             return
 
-        bot.send_message(message.chat.id, "Сессия начата.")
+        bot.send_message(
+            message.chat.id,
+            "▶️ СЕССИЯ НАЧАТА\nDOMINA SUPREMA готова к общению. Завершить — /end.",
+        )
 
     @bot.message_handler(commands=["end"])
     def cmd_end(message: telebot.types.Message) -> None:
@@ -186,13 +205,13 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         row = SessionManager.active(message.from_user.id)
         if not row:
-            bot.send_message(message.chat.id, "Нет активной сессии.")
+            bot.send_message(message.chat.id, "⚠️ СЕССИЯ НЕ ЗАПУЩЕНА\nСначала начните сессию командой /begin.")
             return
         SessionManager.mark_closing(message.from_user.id)
         summary, full_text = make_summary(row["id"])
         end_time = SessionManager.close(message.from_user.id, summary)
         print(full_text)
-        bot.send_message(message.chat.id, "Сессия завершена.")
+        bot.send_message(message.chat.id, "✅ СЕССИЯ ЗАВЕРШЕНА\nДля новой сессии используйте /begin.")
 
     @bot.message_handler(content_types=["text"])
     def text_handler(message: telebot.types.Message) -> None:
@@ -205,7 +224,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if not row:
             bot.send_message(
                 message.chat.id,
-                "Требуется начать сессию командой /begin",
+                "⚠️ СЕССИЯ НЕ ЗАПУЩЕНА\nНачните сессию командой /begin, чтобы получить ответ.",
             )
             return
         sid = row["id"]
@@ -218,7 +237,28 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             completion_tokens = usage.get("completion_tokens", 0)
             charge_user(message.from_user.id, prompt_tokens, completion_tokens)
         except InsufficientCreditsError:
-            bot.send_message(message.chat.id, "Недостаточно средств. Пополните счёт")
+            bot.send_message(message.chat.id, "🛑 НЕДОСТАТОЧНО СРЕДСТВ\nПополните баланс командой /recharge. Баланс и расход — /balance.")
             return
         MessageLogger.log(sid, "assistant", answer)
         bot.send_message(message.chat.id, answer)
+
+    @bot.message_handler(content_types=[
+        "photo",
+        "audio",
+        "sticker",
+        "video",
+        "voice",
+        "document",
+        "animation",
+        "contact",
+        "location",
+        "video_note",
+    ])
+    def other_content(message: telebot.types.Message) -> None:
+        if is_blocked(message.from_user.id):
+            bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
+            return
+        bot.send_message(
+            message.chat.id,
+            "⚠️ НЕВЕРНЫЙ ФОРМАТ ВВОДА\nОтправьте текстовое сообщение или команду, чтобы получить ответ.",
+        )

@@ -109,7 +109,7 @@ class SessionManager:
             summary, _ = make_summary(row["id"])
             end_time = self.close(uid, summary)
             try:
-                bot.send_message(uid, "Сессия завершена из-за простоя.")
+                bot.send_message(uid, "⌛ СЕССИЯ ЗАВЕРШЕНА\nПревышено время ожидания ответа. Начните новую сессию командой /begin.")
             except Exception:
                 pass
 
