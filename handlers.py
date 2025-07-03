@@ -144,7 +144,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.send_message(message.chat.id, "Сервис оплаты недоступен")
             return
 
-        bot.send_message(message.chat.id, f"Ссылка для оплаты: {link}")
+        bot.send_message(message.chat.id, f"Пополнение баланса сейчас не доступно, за подробностями обратитесь в Telegram: @piecode_help")
 
     @bot.message_handler(commands=["coeff"])
     def cmd_coeff(message: telebot.types.Message) -> None:
