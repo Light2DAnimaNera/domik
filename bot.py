@@ -34,6 +34,10 @@ def _payment_monitor() -> None:
             except Exception:
                 continue
             if status == "succeeded":
+                print(
+                    f"Payment {payment_id} for user {user_id} succeeded, "
+                    f"crediting {credits:.0f}"
+                )
                 add_credits(user_id, credits, "yookassa")
                 remove_pending(payment_id)
                 bal = get_balance(user_id)
@@ -45,6 +49,10 @@ def _payment_monitor() -> None:
                         f"Текущий баланс: {bal:.2f} {CURRENCY_SYMBOL}.\n"
                         "Чтобы продолжить общение, используйте команду /begin."
                     ),
+                )
+            else:
+                print(
+                    f"Payment {payment_id} for user {user_id} pending, status: {status}"
                 )
         time.sleep(30)
 
