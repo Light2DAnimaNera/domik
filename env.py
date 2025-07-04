@@ -13,3 +13,4 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.proxyapi.ru/openai/v
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "my_admin_login")
 PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
+SHOP_ID = os.getenv("SHOP_ID")

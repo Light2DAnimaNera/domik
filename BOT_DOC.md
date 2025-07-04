@@ -113,6 +113,7 @@
   - `OPENAI_BASE_URL` (по умолчанию `https://api.proxyapi.ru/openai/v1`)
   - `OPENAI_MODEL` (по умолчанию `gpt-4.1`)
   - `ADMIN_USERNAME` — имя администратора.
+  - `SHOP_ID` — идентификатор магазина YooKassa.
 
 ## Переменные окружения
 
@@ -124,4 +125,5 @@ OPENAI_API_KEY=<ключ OpenAI>
 OPENAI_BASE_URL=<опционально: адрес API OpenAI>
 OPENAI_MODEL=<опционально: модель, например gpt-4.1>
 PAYMENT_TOKEN=<токен YooKassa>
+SHOP_ID=<идентификатор магазина>
 ```
