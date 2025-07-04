@@ -125,26 +125,59 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if is_blocked(message.from_user.id):
             bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
             return
-        parts = message.text.split()
-        if len(parts) != 2:
-            bot.send_message(message.chat.id, "Пополнение баланса сейчас не доступно, за подробностями обратитесь в Telegram: @piecode_help")
-            return
-        try:
-            amount = float(parts[1])
-            if amount <= 0:
-                raise ValueError
-        except ValueError:
-            bot.send_message(message.chat.id, "Некорректная сумма")
-            return
-        try:
-            from yookassa_payment import create_payment_link
+        bal = get_balance(message.from_user.id)
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup.row(
+            telebot.types.InlineKeyboardButton("300 ₽ → 300 🝣", callback_data="recharge_300"),
+            telebot.types.InlineKeyboardButton("500 ₽ → 575 🝣", callback_data="recharge_500"),
+        )
+        markup.row(
+            telebot.types.InlineKeyboardButton("1000 ₽ → 1200 🝣", callback_data="recharge_1000"),
+            telebot.types.InlineKeyboardButton("2000 ₽ → 2500 🝣", callback_data="recharge_2000"),
+        )
+        markup.row(
+            telebot.types.InlineKeyboardButton("❤️‍🔥5000 ₽ → 7000 🝣❤️‍🔥", callback_data="recharge_5000")
+        )
+        bot.send_message(
+            message.chat.id,
+            (
+                "💰 ПОПОЛНЕНИЕ СЧЕТА\n"
+                f"Текущий баланс: {bal:.2f} {CURRENCY_SYMBOL}\n"
+                "Выберите сумму пополнения с помощью кнопок ниже.\n"
+                f"1 рубль = 1 {CURRENCY_SYMBOL}.\n"
+                f"Чем больше сумма — тем больше бонусных {CURRENCY_SYMBOL} вы получаете!"
+            ),
+            reply_markup=markup,
+        )
 
-            link = create_payment_link(message.from_user.id, amount)
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("recharge_"))
+    def recharge_amount(call: telebot.types.CallbackQuery) -> None:
+        if is_blocked(call.from_user.id):
+            bot.answer_callback_query(call.id, "[SYSTEM] В доступе отказано.", show_alert=True)
+            return
+        amount = int(call.data.split("_")[1])
+        bonus_map = {300: 300, 500: 575, 1000: 1200, 2000: 2500, 5000: 7000}
+        credits = bonus_map.get(amount, amount)
+        try:
+            from yookassa_payment import create_payment, add_pending
+
+            payment = create_payment(call.from_user.id, float(amount))
+            add_pending(payment.id, call.from_user.id, float(amount), float(credits))
         except Exception:
-            bot.send_message(message.chat.id, "Сервис оплаты недоступен")
+            bot.send_message(call.message.chat.id, "Сервис оплаты недоступен")
             return
 
-        bot.send_message(message.chat.id, f"Ссылка для оплаты: {link}")
+        link = payment.confirmation.confirmation_url
+        markup = telebot.types.InlineKeyboardMarkup()
+        markup.row(telebot.types.InlineKeyboardButton("перейти к оплате", url=link))
+        text = (
+            "💰 ОРДЕР НА ОПЛАТУ\n"
+            f"{amount} ₽ → {credits} {CURRENCY_SYMBOL}  \n"
+            f"Для оплаты перейдите по ссылке: <a href='{link}'>Оплатить</a>\n"
+            "или воспользуйтесь кнопкой ниже."
+        )
+        bot.send_message(call.message.chat.id, text, reply_markup=markup, parse_mode="HTML")
+        bot.answer_callback_query(call.id)
 
     @bot.message_handler(commands=["coeff"])
     def cmd_coeff(message: telebot.types.Message) -> None:
