@@ -4,6 +4,9 @@ import threading
 import time
 
 from env import TELEGRAM_TOKEN
+from credits import add_credits, get_balance
+from config import CURRENCY_SYMBOL
+from yookassa_payment import list_pending, remove_pending, payment_status
 from handlers import register_handlers
 from bot_commands import setup_default_commands
 from session_manager import SessionManager
@@ -22,6 +25,29 @@ def _session_monitor() -> None:
         SessionManager.expire_idle(bot, 600)
         time.sleep(5)
 
+
+def _payment_monitor() -> None:
+    while True:
+        for payment_id, user_id, amount, credits in list_pending():
+            try:
+                status = payment_status(payment_id)
+            except Exception:
+                continue
+            if status == "succeeded":
+                add_credits(user_id, credits, "yookassa")
+                remove_pending(payment_id)
+                bal = get_balance(user_id)
+                bot.send_message(
+                    user_id,
+                    (
+                        "✅ ОПЛАТА ПРОШЛА УСПЕШНО\n"
+                        f"Ваш баланс пополнен на {credits:.0f} {CURRENCY_SYMBOL}.\n"
+                        f"Текущий баланс: {bal:.2f} {CURRENCY_SYMBOL}.\n"
+                        "Чтобы продолжить общение, используйте команду /begin."
+                    ),
+                )
+        time.sleep(30)
+
 def _stop_bot(*_: object) -> None:
     """Gracefully stop polling and worker pool."""
     bot.stop_bot()
@@ -31,6 +57,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, _stop_bot)
     signal.signal(signal.SIGTERM, _stop_bot)
     threading.Thread(target=_session_monitor, daemon=True).start()
+    threading.Thread(target=_payment_monitor, daemon=True).start()
     try:
         bot.infinity_polling(logger_level=None)
     except KeyboardInterrupt:

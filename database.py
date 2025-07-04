@@ -80,6 +80,16 @@ def init_db() -> None:
         )
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS pending_payments (
+                payment_id TEXT PRIMARY KEY,
+                user_id INTEGER,
+                amount DECIMAL(16,4),
+                credits DECIMAL(16,4)
+            )
+            """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS usage_daily (
                 user_id INTEGER,
                 date TEXT,
