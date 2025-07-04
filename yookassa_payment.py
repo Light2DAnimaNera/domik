@@ -5,9 +5,10 @@ from typing import Iterable
 
 from database import get_connection
 
-from env import PAYMENT_TOKEN
+from env import PAYMENT_TOKEN, SHOP_ID
 
-Configuration.access_token = PAYMENT_TOKEN
+Configuration.account_id = SHOP_ID
+Configuration.secret_key = PAYMENT_TOKEN
 
 
 def create_payment(user_id: int, amount: float) -> Payment:

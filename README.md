@@ -4,7 +4,7 @@
 
 1. Создайте и активируйте виртуальное окружение.
 2. Установите зависимости: `pip install -r requirements.txt`.
-3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`).
+3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`).
 4. Запустите бота: `python bot.py`.
 
    Для остановки нажмите `Ctrl+C` или отправьте процессу сигнал `SIGTERM`. Бот
