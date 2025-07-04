@@ -137,7 +137,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.send_message(message.chat.id, "Некорректная сумма")
             return
         try:
-            from payment import create_payment_link
+            from yookassa_payment import create_payment_link
 
             link = create_payment_link(message.from_user.id, amount)
         except Exception:
