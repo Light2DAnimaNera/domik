@@ -50,6 +50,11 @@ def _payment_monitor() -> None:
                         "Чтобы продолжить общение, используйте команду /begin."
                     ),
                 )
+            elif status == "canceled":
+                print(
+                    f"Payment {payment_id} for user {user_id} canceled"
+                )
+                remove_pending(payment_id)
             else:
                 print(
                     f"Payment {payment_id} for user {user_id} pending, status: {status}"
