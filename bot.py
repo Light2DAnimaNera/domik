@@ -13,7 +13,7 @@ from session_manager import SessionManager
 from middlewares_error import ErrorMiddleware
 from middlewares_activity import ActivityMiddleware
 
-bot = telebot.TeleBot(TELEGRAM_TOKEN, use_class_middlewares=True)
+bot = telebot.TeleBot(TELEGRAM_TOKEN, use_class_middlewares=True, num_threads=10)
 bot.setup_middleware(ErrorMiddleware())
 bot.setup_middleware(ActivityMiddleware())
 setup_default_commands(bot)
