@@ -13,7 +13,7 @@ from database import get_connection
 
 class MessageLogger:
     def __init__(self) -> None:
-        self._cache: defaultdict[int, list[str]] = defaultdict(list)
+        self._cache: defaultdict[int, list[tuple[str, str]]] = defaultdict(list)
 
     def log(self, session_id: int, role: str, content: str) -> None:
         conn = get_connection()
@@ -35,16 +35,19 @@ class MessageLogger:
             pass
         finally:
             conn.close()
-        self._cache[session_id].append(content)
+        timestamp = datetime.now(MOSCOW_TZ).strftime("%m-%d-%y %H-%M")
+        self._cache[session_id].append((timestamp, content))
 
     def context(self, session_id: int) -> str:
         messages = self._cache[session_id]
-        text = "\n".join(messages)
+        lines = [f"[{ts}] {msg}" for ts, msg in messages]
+        text = "\n".join(lines)
         if len(text) <= CONTEXT_LIMIT:
             return text
         while len(text) > CONTEXT_LIMIT and messages:
             messages.pop(0)
-            text = "\n".join(messages)
+            lines = [f"[{ts}] {msg}" for ts, msg in messages]
+            text = "\n".join(lines)
         return text
 
 

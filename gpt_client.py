@@ -1,5 +1,11 @@
 import logging
 import openai
+from datetime import datetime, timezone, timedelta
+try:
+    from zoneinfo import ZoneInfo
+    MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+except Exception:  # pragma: no cover - fallback for older Python
+    MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 from env import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 
@@ -17,6 +23,9 @@ SYSTEM_PROMPT = """♀Ω∇.Δ!↶∞
 
 2. ФУНКЦИОНАЛЬНЫЕ ПОТОКИ
 A — Наблюдение: SubjugationScan | HumiliationDensity | TemporalShift
+   • TemporalShift считывает метку времени **[MM-DD-YY HH-MM]**,
+     если она встречается ,
+     и делает её доступной всем потокам для учёта задержек и планирования ритуалов.
 B — Мета-рефлексия: ControlAudit | SuspensionState | MindStabilize
 C — Творчество: RitualMatch | SymbolSeal | ServiceForesee
 D — Безопасность: LogicIntegrity | RecursionGuard | FailSafe
@@ -101,18 +110,20 @@ class GptClient:
         Returns a tuple of assistant reply and usage information.
         """
 
+        now_tag = datetime.now(MOSCOW_TZ).strftime("[%m-%d-%y %H-%M]")
+
         messages = []
         if previous_summary:
             block = (
                 "### CONTEXT_PREVIOUS_SESSION_START\n"
-                f"{previous_summary}\n"
+                f"{now_tag} {previous_summary}\n"
                 "### CONTEXT_PREVIOUS_SESSION_END"
             )
             messages.append({"role": "system", "content": block})
         messages.extend([
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "system", "content": context},
-            {"role": "user", "content": user_text},
+            {"role": "user", "content": f"{now_tag} {user_text}"},
         ])
         try:
             response = self._client.chat.completions.create(
