@@ -91,6 +91,9 @@ def init_db() -> None:
             """
         )
         cursor.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_id ON payments(payment_id)"
+        )
+        cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS pending_payments (
                 payment_id TEXT PRIMARY KEY,
