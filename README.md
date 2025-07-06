@@ -6,6 +6,7 @@
 2. Установите зависимости: `pip install -r requirements.txt`.
 3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`).
 4. Запустите нужного бота командой `python run.py DS` (DSA или DSS).
+5. В консоли появится сообщение вида «Запуск бота DS», где `DS` — выбранный бот.
 
    Сообщения телебота обрабатываются десятью потоками.
 
