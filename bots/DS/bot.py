@@ -3,8 +3,13 @@ import signal
 import threading
 import time
 
-from shared.env import TELEGRAM_TOKEN_BOT1 as TELEGRAM_TOKEN
+from shared.env import (
+    TELEGRAM_TOKEN_BOT1 as TELEGRAM_TOKEN,
+    TELEGRAM_TOKEN_BOT2,
+    DSA_REPORT_CHAT_ID,
+)
 from shared.credits import add_credits, get_balance
+from shared.models import get_username
 from shared.config import CURRENCY_SYMBOL
 from shared.yookassa_payment import list_pending, remove_pending, payment_status, log_payment
 from .handlers import register_handlers
@@ -18,6 +23,10 @@ bot.setup_middleware(ErrorMiddleware())
 bot.setup_middleware(ActivityMiddleware())
 setup_default_commands(bot)
 register_handlers(bot)
+
+dsa_bot = None
+if TELEGRAM_TOKEN_BOT2 and DSA_REPORT_CHAT_ID:
+    dsa_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT2)
 
 
 def _session_monitor() -> None:
@@ -51,6 +60,20 @@ def _payment_monitor() -> None:
                         "Чтобы продолжить общение, используйте команду /begin."
                     ),
                 )
+                if dsa_bot:
+                    try:
+                        username = get_username(user_id)
+                        username = f"@{username}" if username else str(user_id)
+                        dsa_bot.send_message(
+                            int(DSA_REPORT_CHAT_ID),
+                            (
+                                "НОВОЕ ПОСТУПЛЕНИЕ\n"
+                                f"Пользователь {username} через сервис YooKassa\n"
+                                f"Оплатил подписку на {amount:.2f} ₽"
+                            ),
+                        )
+                    except Exception:
+                        pass
             elif status == "canceled":
                 print(
                     f"Payment {payment_id} for user {user_id} canceled"

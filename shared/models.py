@@ -85,3 +85,20 @@ def user_exists(user_id: int) -> bool:
         return False
     finally:
         conn.close()
+
+
+def get_username(user_id: int) -> str:
+    """Return stored Telegram username for a user."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT username FROM users WHERE telegram_id=?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row and row[0] else ""
+    except sqlite3.Error:
+        return ""
+    finally:
+        conn.close()
