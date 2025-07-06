@@ -141,7 +141,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bonus_map = {300: 300, 500: 575, 1000: 1200, 2000: 2500, 5000: 7000}
         credits = bonus_map.get(amount, amount)
         try:
-            from yookassa_payment import create_payment, add_pending
+            from shared.yookassa_payment import create_payment, add_pending
 
             payment = create_payment(call.from_user.id, float(amount))
             add_pending(payment.id, call.from_user.id, float(amount), float(credits))
