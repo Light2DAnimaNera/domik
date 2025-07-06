@@ -85,11 +85,18 @@ def init_db() -> None:
                 payment_id TEXT,
                 user_id INTEGER,
                 amount DECIMAL(16,4),
+                credits DECIMAL(16,4) NOT NULL DEFAULT 0,
                 status TEXT,
                 timestamp TEXT
             )
             """
         )
+        cursor.execute("PRAGMA table_info(payments)")
+        cols = [r[1] for r in cursor.fetchall()]
+        if "credits" not in cols:
+            cursor.execute(
+                "ALTER TABLE payments ADD COLUMN credits DECIMAL(16,4) NOT NULL DEFAULT 0"
+            )
         cursor.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_id ON payments(payment_id)"
         )
