@@ -2,9 +2,9 @@ import argparse
 import importlib
 
 AVAILABLE_BOTS = {
-    'bot1': 'bots.bot1.bot',
-    'bot2': 'bots.bot2.bot',
-    'bot3': 'bots.bot3.bot',
+    'DS': 'bots.DS.bot',
+    'DSA': 'bots.DSA.bot',
+    'DSS': 'bots.DSS.bot',
 }
 
 def main():
