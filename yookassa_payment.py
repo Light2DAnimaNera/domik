@@ -13,21 +13,28 @@ Configuration.secret_key = PAYMENT_TOKEN
 
 
 def log_payment(payment_id: str, user_id: int, amount: float, status: str) -> None:
+    """Create or update a payment record with the latest status."""
     conn = get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            "SELECT status FROM payments WHERE payment_id=? ORDER BY id DESC LIMIT 1",
+            "SELECT status FROM payments WHERE payment_id=?",
             (payment_id,),
         )
         row = cur.fetchone()
-        if row and row[0] == status:
-            return
         ts = datetime.now().strftime("%m-%d-%y %H-%M")
-        cur.execute(
-            "INSERT INTO payments(payment_id, user_id, amount, status, timestamp) VALUES(?, ?, ?, ?, ?)",
-            (payment_id, user_id, amount, status, ts),
-        )
+        if row is None:
+            cur.execute(
+                "INSERT INTO payments(payment_id, user_id, amount, status, timestamp) VALUES(?, ?, ?, ?, ?)",
+                (payment_id, user_id, amount, status, ts),
+            )
+        else:
+            if row[0] == status:
+                return
+            cur.execute(
+                "UPDATE payments SET status=?, timestamp=? WHERE payment_id=?",
+                (status, ts, payment_id),
+            )
         conn.commit()
     finally:
         conn.close()
