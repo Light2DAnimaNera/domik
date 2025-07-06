@@ -19,3 +19,6 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
 SHOP_ID = os.getenv("SHOP_ID")
 DSA_REPORT_CHAT_ID = os.getenv("DSA_REPORT_CHAT_ID")
+ADMIN_USERNAMES = [
+    u.strip() for u in os.getenv("ADMIN_USERNAME", "").split(",") if u.strip()
+]
