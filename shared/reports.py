@@ -61,6 +61,6 @@ def format_daily_report(report_date: date) -> str:
         f"Новых пользователей: {stats['new_users']}",
         f"Совершено платежей: {stats['payments_count']}",
         f"На сумму: {stats['payments_sum']:.2f} ₽",
-        f"Из них первый платеж: {stats['first_payments_sum']:.2f}",
+        f"Из них первый платеж: {stats['first_payments_sum']:.2f} ₽",
     ]
     return "\n".join(report_lines)
