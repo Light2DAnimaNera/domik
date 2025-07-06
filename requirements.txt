@@ -2,3 +2,5 @@ pytelegrambotapi>=4.14
 openai>=1.0.0
 python-dotenv>=1.0.0
 yookassa>=3.5
+requests>=2.32
+tzdata>=2024.1
