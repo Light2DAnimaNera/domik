@@ -5,7 +5,7 @@
 1. Создайте и активируйте виртуальное окружение.
 2. Установите зависимости: `pip install -r requirements.txt`.
 3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`).
-4. Запустите нужного бота, например: `python bots/bot1/bot.py`.
+4. Запустите нужного бота командой `python run.py bot1` (bot2 или bot3).
 
    Сообщения телебота обрабатываются десятью потоками.
 
