@@ -4,7 +4,7 @@
 
 1. Создайте и активируйте виртуальное окружение.
 2. Установите зависимости: `pip install -r requirements.txt`.
-3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`, `DSA_REPORT_CHAT_ID`).
+3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`, `DSA_REPORT_CHAT_ID`, `ADMIN_USERNAME`).
 4. Запустите нужного бота командой `python run.py DS` (DSA или DSS).
 5. В консоли появится сообщение вида «Запуск бота DS», где `DS` — выбранный бот.
 
@@ -70,3 +70,5 @@
 Бот `DSA` рассылает ежедневный отчет об активности. В 23:59 по московскому времени
 он отправляет сообщение в чат, ID которого задается переменной
 `DSA_REPORT_CHAT_ID`. Тот же отчет можно получить командой `/report`.
+Доступ к боту ограничен: обращаться к нему могут только пользователи,
+чьи имена указаны в `ADMIN_USERNAME`.
