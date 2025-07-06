@@ -3,15 +3,15 @@ import signal
 import threading
 import time
 
-from env import TELEGRAM_TOKEN
-from credits import add_credits, get_balance
-from config import CURRENCY_SYMBOL
-from yookassa_payment import list_pending, remove_pending, payment_status, log_payment
-from handlers import register_handlers
-from bot_commands import setup_default_commands
-from session_manager import SessionManager
-from middlewares_error import ErrorMiddleware
-from middlewares_activity import ActivityMiddleware
+from shared.env import TELEGRAM_TOKEN_BOT1 as TELEGRAM_TOKEN
+from shared.credits import add_credits, get_balance
+from shared.config import CURRENCY_SYMBOL
+from shared.yookassa_payment import list_pending, remove_pending, payment_status, log_payment
+from .handlers import register_handlers
+from .bot_commands import setup_default_commands
+from shared.session_manager import SessionManager
+from shared.middlewares_error import ErrorMiddleware
+from shared.middlewares_activity import ActivityMiddleware
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN, use_class_middlewares=True, num_threads=10)
 bot.setup_middleware(ErrorMiddleware())

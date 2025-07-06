@@ -7,7 +7,7 @@ try:
 except Exception:  # pragma: no cover - fallback for older Python
     MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
-from env import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
+from .env import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 
 SYSTEM_PROMPT = """♀Ω∇.Δ!↶∞
 

@@ -7,8 +7,8 @@ try:
 except Exception:  # pragma: no cover - fallback for older Python
     MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
-from config import CONTEXT_LIMIT
-from database import get_connection
+from .config import CONTEXT_LIMIT
+from .database import get_connection
 
 
 class MessageLogger:

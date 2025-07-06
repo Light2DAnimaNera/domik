@@ -1,7 +1,7 @@
 from telebot.handler_backends import BaseMiddleware
 from telebot.types import Message
 
-from session_manager import SessionManager
+from .session_manager import SessionManager
 
 
 class ActivityMiddleware(BaseMiddleware):

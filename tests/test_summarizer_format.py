@@ -12,9 +12,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 def setup_module(module):
-    import config
+    import shared.config as config
     config.DB_PATH = temp_db.name
-    import database
+    import shared.database as database
     importlib.reload(database)
     database.init_db()
 
@@ -24,8 +24,8 @@ def teardown_module(module):
 
 
 def test_make_summary_adds_timestamps(monkeypatch):
-    import database
-    import summarizer
+    import shared.database as database
+    import shared.summarizer as summarizer
 
     monkeypatch.setattr(summarizer, "client", types.SimpleNamespace(make_summary=lambda ft: "ok"))
 

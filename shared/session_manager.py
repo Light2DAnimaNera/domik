@@ -7,8 +7,8 @@ except Exception:  # pragma: no cover - fallback for older Python
     MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 import time
 
-from config import DB_PATH
-from database import get_connection
+from .config import DB_PATH
+from .database import get_connection
 
 
 class SessionManager:
@@ -105,7 +105,7 @@ class SessionManager:
             row = self.active(uid)
             if not row:
                 continue
-            from summarizer import make_summary
+            from .summarizer import make_summary
             summary, _ = make_summary(row["id"])
             end_time = self.close(uid, summary)
             try:

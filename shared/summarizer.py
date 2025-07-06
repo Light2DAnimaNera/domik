@@ -1,7 +1,7 @@
 import sqlite3
 
-from database import get_connection
-from gpt_client import GptClient
+from .database import get_connection
+from .gpt_client import GptClient
 
 client = GptClient()
 

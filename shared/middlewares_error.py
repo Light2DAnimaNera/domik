@@ -1,7 +1,7 @@
 from telebot.handler_backends import BaseMiddleware
 from telebot.types import Message
 
-from credits import InsufficientCreditsError
+from .credits import InsufficientCreditsError
 
 
 class ErrorMiddleware(BaseMiddleware):

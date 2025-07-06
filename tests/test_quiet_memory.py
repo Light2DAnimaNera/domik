@@ -12,9 +12,9 @@ temp_db = tempfile.NamedTemporaryFile(delete=False)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 def setup_module(module):
-    import config
+    import shared.config as config
     config.DB_PATH = temp_db.name
-    import database
+    import shared.database as database
     importlib.reload(database)
     database.init_db()
 
@@ -34,9 +34,9 @@ def test_previous_summary_exists(monkeypatch):
 
     dummy_openai = types.SimpleNamespace(Client=DummyClient)
     monkeypatch.setitem(sys.modules, 'openai', dummy_openai)
-    from database import get_connection
-    from session_manager import SessionManager
-    import gpt_client
+    from shared.database import get_connection
+    from shared.session_manager import SessionManager
+    import shared.gpt_client as gpt_client
 
     user = DummyUser(1)
     conn = get_connection()
@@ -77,8 +77,8 @@ def test_no_previous_summary(monkeypatch):
 
     dummy_openai = types.SimpleNamespace(Client=DummyClient)
     monkeypatch.setitem(sys.modules, 'openai', dummy_openai)
-    from session_manager import SessionManager
-    import gpt_client
+    from shared.session_manager import SessionManager
+    import shared.gpt_client as gpt_client
 
     user = DummyUser(2)
     sid = SessionManager.start(user)
