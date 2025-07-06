@@ -2,8 +2,8 @@ from datetime import datetime
 import sqlite3
 import telebot
 
-from database import get_connection
-from config import INITIAL_CREDITS
+from .database import get_connection
+from .config import INITIAL_CREDITS
 
 
 def add_user_if_not_exists(message: telebot.types.Message) -> None:

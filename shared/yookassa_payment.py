@@ -4,9 +4,9 @@ from yookassa import Configuration, Payment
 from typing import Iterable
 from datetime import datetime
 
-from database import get_connection
+from .database import get_connection
 
-from env import PAYMENT_TOKEN, SHOP_ID
+from .env import PAYMENT_TOKEN, SHOP_ID
 
 Configuration.account_id = SHOP_ID
 Configuration.secret_key = PAYMENT_TOKEN

@@ -4,8 +4,8 @@ import sqlite3
 import time
 from datetime import datetime, date
 
-from database import get_connection
-from config import CURRENCY_SYMBOL
+from .database import get_connection
+from .config import CURRENCY_SYMBOL
 
 
 class InsufficientCreditsError(Exception):

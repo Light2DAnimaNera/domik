@@ -1,15 +1,15 @@
 import telebot
 import math
 
-from gpt_client import GptClient
-from models import (
+from shared.gpt_client import GptClient
+from shared.models import (
     add_user_if_not_exists,
     get_all_users,
     set_blocked,
     is_blocked,
     user_exists,
 )
-from credits import (
+from shared.credits import (
     charge_user,
     get_balance,
     get_today_spent,
@@ -17,12 +17,12 @@ from credits import (
     set_token_coeff,
     InsufficientCreditsError,
 )
-from env import ADMIN_USERNAME
-from session_manager import SessionManager
-from message_logger import MessageLogger
-from summarizer import make_summary
-from bot_commands import setup_default_commands
-from config import CURRENCY_SYMBOL
+from shared.env import ADMIN_USERNAME
+from shared.session_manager import SessionManager
+from shared.message_logger import MessageLogger
+from shared.summarizer import make_summary
+from .bot_commands import setup_default_commands
+from shared.config import CURRENCY_SYMBOL
 client = GptClient()
 
 def register_handlers(bot: telebot.TeleBot) -> None:

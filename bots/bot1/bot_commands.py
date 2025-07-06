@@ -1,7 +1,7 @@
 import telebot
 from typing import Iterable, Tuple
 
-from env import ADMIN_USERNAME
+from shared.env import ADMIN_USERNAME
 
 
 DEFAULT_COMMANDS: list[Tuple[str, str]] = [
