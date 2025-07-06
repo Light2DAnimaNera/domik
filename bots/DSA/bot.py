@@ -4,7 +4,7 @@ from datetime import datetime, date, time as dt_time, timedelta
 from zoneinfo import ZoneInfo
 
 import telebot
-from shared.env import TELEGRAM_TOKEN_BOT2, DSA_REPORT_CHAT_ID
+from shared.env import TELEGRAM_TOKEN_BOT2, DSA_REPORT_CHAT_IDS
 from shared.reports import format_daily_report
 from .bot_commands import setup_default_commands
 
@@ -16,9 +16,9 @@ register_handlers(bot)
 
 
 def _report_scheduler() -> None:
-    if not DSA_REPORT_CHAT_ID:
+    if not DSA_REPORT_CHAT_IDS:
         return
-    chat_id = int(DSA_REPORT_CHAT_ID)
+    chat_ids = DSA_REPORT_CHAT_IDS
     tz = ZoneInfo("Europe/Moscow")
     while True:
         now = datetime.now(tz)
@@ -27,7 +27,8 @@ def _report_scheduler() -> None:
             target += timedelta(days=1)
         time.sleep((target - now).total_seconds())
         report = format_daily_report(target.date())
-        bot.send_message(chat_id, report)
+        for chat_id in chat_ids:
+            bot.send_message(chat_id, report)
 
 
 def main() -> None:

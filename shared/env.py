@@ -18,7 +18,11 @@ OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.proxyapi.ru/openai/v
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1")
 PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
 SHOP_ID = os.getenv("SHOP_ID")
-DSA_REPORT_CHAT_ID = os.getenv("DSA_REPORT_CHAT_ID")
+DSA_REPORT_CHAT_IDS = [
+    int(x.strip())
+    for x in os.getenv("DSA_REPORT_CHAT_ID", "").split(",")
+    if x.strip()
+]
 ADMIN_USERNAMES = [
     u.strip() for u in os.getenv("ADMIN_USERNAME", "").split(",") if u.strip()
 ]

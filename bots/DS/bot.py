@@ -6,7 +6,7 @@ import time
 from shared.env import (
     TELEGRAM_TOKEN_BOT1 as TELEGRAM_TOKEN,
     TELEGRAM_TOKEN_BOT2,
-    DSA_REPORT_CHAT_ID,
+    DSA_REPORT_CHAT_IDS,
 )
 from shared.credits import add_credits, get_balance
 from shared.models import get_username
@@ -25,7 +25,7 @@ setup_default_commands(bot)
 register_handlers(bot)
 
 dsa_bot = None
-if TELEGRAM_TOKEN_BOT2 and DSA_REPORT_CHAT_ID:
+if TELEGRAM_TOKEN_BOT2 and DSA_REPORT_CHAT_IDS:
     dsa_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT2)
 
 
@@ -64,14 +64,15 @@ def _payment_monitor() -> None:
                     try:
                         username = get_username(user_id)
                         username = f"@{username}" if username else str(user_id)
-                        dsa_bot.send_message(
-                            int(DSA_REPORT_CHAT_ID),
-                            (
-                                "НОВОЕ ПОСТУПЛЕНИЕ\n"
-                                f"Пользователь {username} через сервис YooKassa\n"
-                                f"Оплатил подписку на {amount:.2f} ₽"
-                            ),
-                        )
+                        for chat_id in DSA_REPORT_CHAT_IDS:
+                            dsa_bot.send_message(
+                                chat_id,
+                                (
+                                    "НОВОЕ ПОСТУПЛЕНИЕ\n"
+                                    f"Пользователь {username} через сервис YooKassa\n"
+                                    f"Оплатил подписку на {amount:.2f} ₽"
+                                ),
+                            )
                     except Exception:
                         pass
             elif status == "canceled":
