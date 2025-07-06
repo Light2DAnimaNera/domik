@@ -80,6 +80,18 @@ def init_db() -> None:
         )
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS payments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                payment_id TEXT,
+                user_id INTEGER,
+                amount DECIMAL(16,4),
+                status TEXT,
+                timestamp TEXT
+            )
+            """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS pending_payments (
                 payment_id TEXT PRIMARY KEY,
                 user_id INTEGER,

@@ -6,7 +6,7 @@ import time
 from env import TELEGRAM_TOKEN
 from credits import add_credits, get_balance
 from config import CURRENCY_SYMBOL
-from yookassa_payment import list_pending, remove_pending, payment_status
+from yookassa_payment import list_pending, remove_pending, payment_status, log_payment
 from handlers import register_handlers
 from bot_commands import setup_default_commands
 from session_manager import SessionManager
@@ -39,6 +39,7 @@ def _payment_monitor() -> None:
                     f"crediting {credits:.0f}"
                 )
                 add_credits(user_id, credits, "yookassa")
+                log_payment(payment_id, user_id, amount, status)
                 remove_pending(payment_id)
                 bal = get_balance(user_id)
                 bot.send_message(
@@ -54,11 +55,13 @@ def _payment_monitor() -> None:
                 print(
                     f"Payment {payment_id} for user {user_id} canceled"
                 )
+                log_payment(payment_id, user_id, amount, status)
                 remove_pending(payment_id)
             else:
                 print(
                     f"Payment {payment_id} for user {user_id} pending, status: {status}"
                 )
+                log_payment(payment_id, user_id, amount, status)
         time.sleep(30)
 
 def _stop_bot(*_: object) -> None:
