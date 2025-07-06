@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from yookassa import Configuration, Payment
 from typing import Iterable
+from datetime import datetime
 
 from database import get_connection
 
@@ -9,6 +10,27 @@ from env import PAYMENT_TOKEN, SHOP_ID
 
 Configuration.account_id = SHOP_ID
 Configuration.secret_key = PAYMENT_TOKEN
+
+
+def log_payment(payment_id: str, user_id: int, amount: float, status: str) -> None:
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT status FROM payments WHERE payment_id=? ORDER BY id DESC LIMIT 1",
+            (payment_id,),
+        )
+        row = cur.fetchone()
+        if row and row[0] == status:
+            return
+        ts = datetime.now().strftime("%m-%d-%y %H-%M")
+        cur.execute(
+            "INSERT INTO payments(payment_id, user_id, amount, status, timestamp) VALUES(?, ?, ?, ?, ?)",
+            (payment_id, user_id, amount, status, ts),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def create_payment(user_id: int, amount: float) -> Payment:
@@ -25,6 +47,7 @@ def create_payment(user_id: int, amount: float) -> Payment:
         f"Created payment {payment.id} for user {user_id} "
         f"on amount {amount:.2f}"
     )
+    log_payment(payment.id, user_id, amount, payment.status)
     return payment
 
 
