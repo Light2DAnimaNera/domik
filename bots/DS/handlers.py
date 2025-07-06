@@ -4,7 +4,6 @@ import math
 from shared.gpt_client import GptClient
 from shared.models import (
     add_user_if_not_exists,
-    get_all_users,
     set_blocked,
     is_blocked,
     user_exists,
@@ -13,11 +12,8 @@ from shared.credits import (
     charge_user,
     get_balance,
     get_today_spent,
-    get_token_coeff,
-    set_token_coeff,
     InsufficientCreditsError,
 )
-from shared.env import ADMIN_USERNAME
 from shared.session_manager import SessionManager
 from shared.message_logger import MessageLogger
 from shared.summarizer import make_summary
@@ -42,7 +38,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             setup_default_commands(
                 bot,
                 chat_id=message.chat.id,
-                username=message.from_user.username,
             )
             return
 
@@ -69,7 +64,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 setup_default_commands(
                     bot,
                     chat_id=answer.chat.id,
-                    username=answer.from_user.username,
                 )
             else:
                 set_blocked(answer.from_user.id, True)
@@ -92,18 +86,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             "Если возникли вопросы или требуется помощь, обратитесь в поддержку через Telegram: @piecode_help",
         )
 
-    @bot.message_handler(commands=["all_users"])
-    def cmd_all_users(message: telebot.types.Message) -> None:
-        if is_blocked(message.from_user.id):
-            bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
-            return
-        if message.from_user.username != ADMIN_USERNAME:
-            return
-        users = get_all_users()
-        lines = ["👥 СПИСОК ПОЛЬЗОВАТЕЛЕЙ"]
-        for username, date_joined in users:
-            lines.append(f"@{username} – {date_joined}")
-        bot.send_message(message.chat.id, "\n".join(lines))
 
     @bot.message_handler(commands=["balance"])
     def cmd_balance(message: telebot.types.Message) -> None:
@@ -179,34 +161,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bot.send_message(call.message.chat.id, text, reply_markup=markup, parse_mode="HTML")
         bot.answer_callback_query(call.id)
 
-    @bot.message_handler(commands=["coeff"])
-    def cmd_coeff(message: telebot.types.Message) -> None:
-        if is_blocked(message.from_user.id):
-            bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
-            return
-        if message.from_user.username != ADMIN_USERNAME:
-            return
-        coeff = get_token_coeff()
-        bot.send_message(message.chat.id, f"⚙️ ТЕКУЩИЙ КОЭФФИЦИЕНТ\nТекущее значение: {coeff}.")
-
-    @bot.message_handler(commands=["set_coeff"])
-    def cmd_set_coeff(message: telebot.types.Message) -> None:
-        if is_blocked(message.from_user.id):
-            bot.send_message(message.chat.id, "[SYSTEM] В доступе отказано.")
-            return
-        if message.from_user.username != ADMIN_USERNAME:
-            return
-        parts = message.text.split()
-        if len(parts) != 2:
-            bot.send_message(message.chat.id, "ℹ️ ПАРАМЕТР ОТСУТСТВУЕТ\nВведите в формате /set_coeff {число}.")
-            return
-        try:
-            val = float(parts[1])
-            set_token_coeff(val)
-        except ValueError:
-            bot.send_message(message.chat.id, "❌ НЕВЕРНОЕ ЗНАЧЕНИЕ\nВведите в формате /set_coeff {число}.")
-            return
-        bot.send_message(message.chat.id, f"✅ КОЭФФИЦИЕНТ ОБНОВЛЁН\nНовое значение: {val}.")
 
     @bot.message_handler(commands=["begin"])
     def cmd_begin(message: telebot.types.Message) -> None:
