@@ -114,6 +114,14 @@
       консоль, сколько токенов потрачено на запрос и на ответ, и показывает новый
       баланс пользователя.
 
+### `yookassa_payment.py`
+- Функции работы с YooKassa:
+  - `create_payment(user_id, amount)` — создаёт платёж и возвращает объект `Payment`;
+  - `payment_status(payment_id)` — проверяет текущий статус платежа;
+  - `add_pending(payment_id, user_id, amount, credits)` — регистрирует неоплаченную транзакцию;
+  - `list_pending()` и `remove_pending(payment_id)` — управляют списком ожидания;
+  - `log_payment(payment_id, user_id, amount, status)` — фиксирует статус в таблице `payments`.
+
 ### `env.py`
 - Загружает переменные из `.env` и экспортирует:
   - `TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`
