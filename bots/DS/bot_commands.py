@@ -1,8 +1,6 @@
 import telebot
 from typing import Iterable, Tuple
 
-from shared.env import ADMIN_USERNAME
-
 
 DEFAULT_COMMANDS: list[Tuple[str, str]] = [
     ("start", "Начать работу с ботом"),
@@ -13,19 +11,9 @@ DEFAULT_COMMANDS: list[Tuple[str, str]] = [
     ("recharge", "Пополнить баланс"),
 ]
 
-ADMIN_COMMANDS: list[Tuple[str, str]] = [
-    ("all_users", "Список пользователей"),
-    ("set_coeff", "Изменить тариф"),
-    ("coeff", "Показать коэффициент"),
-]
-
-
 def _commands_for_user(username: str | None) -> Iterable[Tuple[str, str]]:
-    """Return a command list depending on username."""
-    commands = list(DEFAULT_COMMANDS)
-    if username == ADMIN_USERNAME:
-        commands.extend(ADMIN_COMMANDS)
-    return commands
+    """Return a command list."""
+    return list(DEFAULT_COMMANDS)
 
 
 def setup_default_commands(
