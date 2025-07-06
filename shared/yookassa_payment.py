@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yookassa import Configuration, Payment
-from typing import Iterable
+from typing import Iterable, Optional
 from datetime import datetime
 
 from .database import get_connection
@@ -12,7 +12,13 @@ Configuration.account_id = SHOP_ID
 Configuration.secret_key = PAYMENT_TOKEN
 
 
-def log_payment(payment_id: str, user_id: int, amount: float, status: str) -> None:
+def log_payment(
+    payment_id: str,
+    user_id: int,
+    amount: float,
+    status: str,
+    credits: Optional[float] = None,
+) -> None:
     """Create or update a payment record with the latest status."""
     conn = get_connection()
     try:
@@ -25,22 +31,28 @@ def log_payment(payment_id: str, user_id: int, amount: float, status: str) -> No
         ts = datetime.now().strftime("%m-%d-%y %H-%M")
         if row is None:
             cur.execute(
-                "INSERT INTO payments(payment_id, user_id, amount, status, timestamp) VALUES(?, ?, ?, ?, ?)",
-                (payment_id, user_id, amount, status, ts),
+                "INSERT INTO payments(payment_id, user_id, amount, credits, status, timestamp) VALUES(?, ?, ?, ?, ?, ?)",
+                (payment_id, user_id, amount, credits or 0, status, ts),
             )
         else:
-            if row[0] == status:
+            if row[0] == status and credits is None:
                 return
-            cur.execute(
-                "UPDATE payments SET status=?, timestamp=? WHERE payment_id=?",
-                (status, ts, payment_id),
-            )
+            if credits is None:
+                cur.execute(
+                    "UPDATE payments SET status=?, timestamp=? WHERE payment_id=?",
+                    (status, ts, payment_id),
+                )
+            else:
+                cur.execute(
+                    "UPDATE payments SET status=?, credits=?, timestamp=? WHERE payment_id=?",
+                    (status, credits, ts, payment_id),
+                )
         conn.commit()
     finally:
         conn.close()
 
 
-def create_payment(user_id: int, amount: float) -> Payment:
+def create_payment(user_id: int, amount: float, credits: Optional[float] = None) -> Payment:
     """Create payment and return the Payment object."""
     payment = Payment.create(
         {
@@ -54,7 +66,7 @@ def create_payment(user_id: int, amount: float) -> Payment:
         f"Created payment {payment.id} for user {user_id} "
         f"on amount {amount:.2f}"
     )
-    log_payment(payment.id, user_id, amount, payment.status)
+    log_payment(payment.id, user_id, amount, payment.status, credits)
     return payment
 
 

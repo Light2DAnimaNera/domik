@@ -39,7 +39,7 @@ def _payment_monitor() -> None:
                     f"crediting {credits:.0f}"
                 )
                 add_credits(user_id, credits, "yookassa")
-                log_payment(payment_id, user_id, amount, status)
+                log_payment(payment_id, user_id, amount, status, credits)
                 remove_pending(payment_id)
                 bal = get_balance(user_id)
                 bot.send_message(
@@ -55,13 +55,13 @@ def _payment_monitor() -> None:
                 print(
                     f"Payment {payment_id} for user {user_id} canceled"
                 )
-                log_payment(payment_id, user_id, amount, status)
+                log_payment(payment_id, user_id, amount, status, 0)
                 remove_pending(payment_id)
             else:
                 print(
                     f"Payment {payment_id} for user {user_id} pending, status: {status}"
                 )
-                log_payment(payment_id, user_id, amount, status)
+                log_payment(payment_id, user_id, amount, status, 0)
         time.sleep(30)
 
 def _stop_bot(*_: object) -> None:
