@@ -12,6 +12,7 @@ def main():
     parser.add_argument('bot', choices=AVAILABLE_BOTS, help='Bot name to run')
     args = parser.parse_args()
     module = importlib.import_module(AVAILABLE_BOTS[args.bot])
+    print(f"Запуск бота {args.bot}")
     if hasattr(module, 'main'):
         module.main()
     else:
