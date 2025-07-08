@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from yookassa import Configuration, Payment
 from typing import Iterable, Optional
+import uuid
 from datetime import datetime
 import logging
 
@@ -53,15 +54,44 @@ def log_payment(
         conn.close()
 
 
-def create_payment(user_id: int, amount: float, credits: Optional[float] = None) -> Payment:
+def create_payment(
+    user_id: int,
+    amount: float,
+    user_email: str,
+    credits: Optional[float] = None,
+) -> Payment:
     """Create payment and return the Payment object."""
+    idempotence_key = str(uuid.uuid4())
     payment = Payment.create(
         {
-            "amount": {"value": f"{amount:.2f}", "currency": "RUB"},
-            "confirmation": {"type": "redirect", "return_url": "https://t.me"},
+            "amount": {
+                "value": f"{amount:.2f}",
+                "currency": "RUB",
+            },
+            "confirmation": {
+                "type": "redirect",
+                "return_url": "https://t.me/DominaSupremaBot",
+            },
             "capture": True,
-            "description": f"User {user_id} recharge",
-        }
+            "description": "Пополнение баланса DominaSupremaBot",
+            "receipt": {
+                "customer": {"email": user_email},
+                "items": [
+                    {
+                        "description": "Пополнение баланса DominaSupremaBot",
+                        "quantity": "1.00",
+                        "amount": {
+                            "value": f"{amount:.2f}",
+                            "currency": "RUB",
+                        },
+                        "vat_code": 1,
+                        "payment_mode": "full_prepayment",
+                        "payment_subject": "service",
+                    }
+                ],
+            },
+        },
+        idempotence_key,
     )
     logging.info(
         "Created payment %s for user %s on amount %.2f",

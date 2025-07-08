@@ -130,7 +130,7 @@
 
 ### `yookassa_payment.py`
 - Функции работы с YooKassa:
-  - `create_payment(user_id, amount, credits=None)` — создаёт платёж и возвращает объект `Payment`;
+  - `create_payment(user_id, amount, user_email, credits=None)` — создаёт платёж и возвращает объект `Payment`;
   - `payment_status(payment_id)` — проверяет текущий статус платежа;
   - `add_pending(payment_id, user_id, amount, credits)` — регистрирует неоплаченную транзакцию;
   - `list_pending()` и `remove_pending(payment_id)` — управляют списком ожидания;

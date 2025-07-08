@@ -171,7 +171,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             try:
                 from shared.yookassa_payment import create_payment, add_pending
 
-                payment = create_payment(answer.from_user.id, float(amnt))
+                payment = create_payment(answer.from_user.id, float(amnt), answer.text)
                 add_pending(payment.id, answer.from_user.id, float(amnt), float(creds))
             except Exception as exc:
                 logging.exception("Payment error: %s", exc)
