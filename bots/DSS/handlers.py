@@ -46,7 +46,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         topic_id, created = ensure_topic(message.from_user, message.text or "")
         if created:
             return
-        msg_id = bot.copy_message(
+        msg_id = bot.forward_message(
             DSS_FORUM_ID,
             message.chat.id,
             message.id,
@@ -59,6 +59,9 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.from_user and message.from_user.is_bot:
             return
         user_id = get_user_by_topic(message.message_thread_id)
+        if not user_id and message.reply_to_message and message.reply_to_message.forward_from:
+            user_id = message.reply_to_message.forward_from.id
+            set_dss_topic(user_id, message.message_thread_id)
         if not user_id:
             return
         if message.reply_to_message and message.reply_to_message.id in _reply_map:
