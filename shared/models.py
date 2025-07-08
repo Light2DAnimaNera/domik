@@ -104,7 +104,27 @@ def get_username(user_id: int) -> str:
         conn.close()
 
 
+_dss_topic_cache: dict[int, int] = {}
+
+def _load_dss_topics() -> None:
+    """Preload DSS topics from the database into memory."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id, topic_id FROM dss_topics")
+        for user_id, topic_id in cursor.fetchall():
+            _dss_topic_cache[int(user_id)] = int(topic_id)
+    except sqlite3.Error:
+        pass
+    finally:
+        conn.close()
+
+_load_dss_topics()
+
+
 def get_dss_topic(user_id: int) -> int | None:
+    if user_id in _dss_topic_cache:
+        return _dss_topic_cache[user_id]
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -113,7 +133,10 @@ def get_dss_topic(user_id: int) -> int | None:
             (user_id,),
         )
         row = cursor.fetchone()
-        return int(row[0]) if row else None
+        if row:
+            _dss_topic_cache[user_id] = int(row[0])
+            return int(row[0])
+        return None
     except sqlite3.Error:
         return None
     finally:
@@ -128,6 +151,7 @@ def set_dss_topic(user_id: int, topic_id: int) -> None:
             (user_id, topic_id),
         )
         conn.commit()
+        _dss_topic_cache[user_id] = topic_id
     except sqlite3.Error:
         pass
     finally:
