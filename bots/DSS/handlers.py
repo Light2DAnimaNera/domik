@@ -11,6 +11,27 @@ from shared.models import (
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
+    def ensure_topic(user: types.User, first_text: str | None) -> tuple[int, bool]:
+        """Return topic id for user and flag whether it was created."""
+        topic_id = get_dss_topic(user.id)
+        created = False
+        if topic_id is None:
+            topic = bot.create_forum_topic(
+                DSS_FORUM_ID,
+                name=f"{user.first_name} {user.id}",
+            )
+            topic_id = topic.message_thread_id
+            set_dss_topic(user.id, topic_id)
+            passport = (
+                f"Имя: {user.first_name}\n"
+                f"@{user.username or ''}\n"
+                f"ID: {user.id}\n"
+            )
+            if first_text:
+                passport += first_text
+            bot.send_message(DSS_FORUM_ID, passport, message_thread_id=topic_id)
+            created = True
+        return topic_id, created
     @bot.message_handler(commands=["start"])
     def cmd_start(message: types.Message) -> None:
         bot.send_message(message.chat.id, "Привет, что интересует?")
@@ -20,28 +41,15 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.content_type == "text" and message.text.startswith("/start"):
             return
         add_user_if_not_exists(message)
-        topic_id = get_dss_topic(message.from_user.id)
-        if topic_id is None:
-            topic = bot.create_forum_topic(
-                DSS_FORUM_ID,
-                name=f"{message.from_user.first_name} {message.from_user.id}",
-            )
-            topic_id = topic.message_thread_id
-            set_dss_topic(message.from_user.id, topic_id)
-            passport = (
-                f"Имя: {message.from_user.first_name}\n"
-                f"@{message.from_user.username or ''}\n"
-                f"ID: {message.from_user.id}\n"
-                f"{message.text or ''}"
-            )
-            bot.send_message(DSS_FORUM_ID, passport, message_thread_id=topic_id)
-        else:
-            bot.copy_message(
-                DSS_FORUM_ID,
-                message.chat.id,
-                message.id,
-                message_thread_id=topic_id,
-            )
+        topic_id, created = ensure_topic(message.from_user, message.text or "")
+        if created:
+            return
+        bot.copy_message(
+            DSS_FORUM_ID,
+            message.chat.id,
+            message.id,
+            message_thread_id=topic_id,
+        )
 
     @bot.message_handler(func=lambda m: m.chat.id == DSS_FORUM_ID and m.message_thread_id)
     def relay_operator(message: types.Message) -> None:

@@ -114,9 +114,12 @@ def init_db() -> None:
             """
             CREATE TABLE IF NOT EXISTS dss_topics (
                 user_id INTEGER PRIMARY KEY,
-                topic_id INTEGER
+                topic_id INTEGER UNIQUE
             )
             """
+        )
+        cursor.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_dss_topic_id ON dss_topics(topic_id)"
         )
         cursor.execute(
             """
