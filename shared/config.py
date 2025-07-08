@@ -1,4 +1,4 @@
-MODEL_NAME = "gpt-4.1"
+MODEL_NAME = "gpt-4.1-mini"
 CONTEXT_LIMIT = 15000
 DB_PATH = "users.db"
 DSS_DB_PATH = "dss_topics.db"
