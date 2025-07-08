@@ -62,37 +62,36 @@ def create_payment(
 ) -> Payment:
     """Create payment and return the Payment object."""
     idempotence_key = str(uuid.uuid4())
-    payment = Payment.create(
-        {
-            "amount": {
-                "value": f"{amount:.2f}",
-                "currency": "RUB",
-            },
-            "confirmation": {
-                "type": "redirect",
-                "return_url": "https://t.me/DominaSupremaBot",
-            },
-            "capture": True,
-            "description": "Пополнение баланса DominaSupremaBot",
-            "receipt": {
-                "customer": {"email": user_email},
-                "items": [
-                    {
-                        "description": "Пополнение баланса DominaSupremaBot",
-                        "quantity": "1.00",
-                        "amount": {
-                            "value": f"{amount:.2f}",
-                            "currency": "RUB",
-                        },
-                        "vat_code": 1,
-                        "payment_mode": "full_prepayment",
-                        "payment_subject": "service",
-                    }
-                ],
-            },
+    payload = {
+        "amount": {
+            "value": f"{amount:.2f}",
+            "currency": "RUB",
         },
-        idempotence_key,
-    )
+        "confirmation": {
+            "type": "redirect",
+            "return_url": "https://t.me/DominaSupremaBot",
+        },
+        "capture": True,
+        "description": "Пополнение баланса DominaSupremaBot",
+        "receipt": {
+            "customer": {"email": user_email},
+            "items": [
+                {
+                    "description": "Пополнение баланса DominaSupremaBot",
+                    "quantity": "1.00",
+                    "amount": {
+                        "value": f"{amount:.2f}",
+                        "currency": "RUB",
+                    },
+                    "vat_code": 1,
+                    "payment_mode": "full_prepayment",
+                    "payment_subject": "service",
+                }
+            ],
+        },
+    }
+    logging.info("Sending payment payload to YooKassa: %s", payload)
+    payment = Payment.create(payload, idempotence_key)
     logging.info(
         "Created payment %s for user %s on amount %.2f",
         payment.id,
