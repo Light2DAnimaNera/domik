@@ -11,13 +11,20 @@ def init_dss_db() -> None:
             """
             CREATE TABLE IF NOT EXISTS topics (
                 user_id INTEGER PRIMARY KEY,
-                topic_id INTEGER UNIQUE
+                topic_id INTEGER UNIQUE,
+                passport_message_id INTEGER
             )
-            """
+        """
         )
         cursor.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_topic_id ON topics(topic_id)"
         )
+        cursor.execute("PRAGMA table_info(topics)")
+        cols = [r[1] for r in cursor.fetchall()]
+        if "passport_message_id" not in cols:
+            cursor.execute(
+                "ALTER TABLE topics ADD COLUMN passport_message_id INTEGER"
+            )
         conn.commit()
     except sqlite3.Error:
         pass
