@@ -112,6 +112,14 @@ def init_db() -> None:
         )
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS dss_topics (
+                user_id INTEGER PRIMARY KEY,
+                topic_id INTEGER
+            )
+            """
+        )
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS usage_daily (
                 user_id INTEGER,
                 date TEXT,

@@ -102,3 +102,49 @@ def get_username(user_id: int) -> str:
         return ""
     finally:
         conn.close()
+
+
+def get_dss_topic(user_id: int) -> int | None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT topic_id FROM dss_topics WHERE user_id=?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row else None
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
+
+
+def set_dss_topic(user_id: int, topic_id: int) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO dss_topics(user_id, topic_id) VALUES(?, ?)",
+            (user_id, topic_id),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        pass
+    finally:
+        conn.close()
+
+
+def get_user_by_topic(topic_id: int) -> int | None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_id FROM dss_topics WHERE topic_id=?",
+            (topic_id,),
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row else None
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
