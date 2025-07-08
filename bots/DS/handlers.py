@@ -23,6 +23,7 @@ from shared.config import CURRENCY_SYMBOL
 client = GptClient()
 
 def register_handlers(bot: telebot.TeleBot) -> None:
+    pending_email: dict[int, tuple[int, int]] = {}
     @bot.message_handler(commands=["start"])
     def cmd_start(message: telebot.types.Message) -> None:
         exists = user_exists(message.from_user.id)
@@ -141,26 +142,43 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         amount = int(call.data.split("_")[1])
         bonus_map = {300: 300, 500: 575, 1000: 1200, 2000: 2500, 5000: 7000}
         credits = bonus_map.get(amount, amount)
-        try:
-            from shared.yookassa_payment import create_payment, add_pending
-
-            payment = create_payment(call.from_user.id, float(amount))
-            add_pending(payment.id, call.from_user.id, float(amount), float(credits))
-        except Exception as exc:
-            logging.exception("Payment error: %s", exc)
-            bot.send_message(call.message.chat.id, "Сервис оплаты недоступен")
-            return
-
-        link = payment.confirmation.confirmation_url
-        markup = telebot.types.InlineKeyboardMarkup()
-        markup.row(telebot.types.InlineKeyboardButton("перейти к оплате", url=link))
-        text = (
-            "💰 ОРДЕР НА ОПЛАТУ\n"
-            f"{amount} ₽ → {credits} {CURRENCY_SYMBOL}  \n"
-            f"Для оплаты перейдите по ссылке: <a href='{link}'>Оплатить</a>\n"
-            "или воспользуйтесь кнопкой ниже."
+        pending_email[call.from_user.id] = (amount, credits)
+        msg = bot.send_message(
+            call.message.chat.id,
+            "Для получения чека укажите ваш email. Он будет использован только для отправки фискального документа.",
         )
-        bot.send_message(call.message.chat.id, text, reply_markup=markup, parse_mode="HTML")
+
+        def _email_step(answer: telebot.types.Message) -> None:
+            if is_blocked(answer.from_user.id):
+                bot.send_message(answer.chat.id, "[SYSTEM] В доступе отказано.")
+                return
+            data = pending_email.pop(answer.from_user.id, None)
+            if data is None:
+                bot.send_message(answer.chat.id, "Попробуйте снова выполнить /recharge")
+                return
+            amnt, creds = data
+            try:
+                from shared.yookassa_payment import create_payment, add_pending
+
+                payment = create_payment(answer.from_user.id, float(amnt))
+                add_pending(payment.id, answer.from_user.id, float(amnt), float(creds))
+            except Exception as exc:
+                logging.exception("Payment error: %s", exc)
+                bot.send_message(answer.chat.id, "Сервис оплаты недоступен")
+                return
+
+            link = payment.confirmation.confirmation_url
+            markup = telebot.types.InlineKeyboardMarkup()
+            markup.row(telebot.types.InlineKeyboardButton("перейти к оплате", url=link))
+            text = (
+                "💰 ОРДЕР НА ОПЛАТУ\n"
+                f"{amnt} ₽ → {creds} {CURRENCY_SYMBOL}  \n"
+                f"Для оплаты перейдите по ссылке: <a href='{link}'>Оплатить</a>\n"
+                "или воспользуйтесь кнопкой ниже."
+            )
+            bot.send_message(answer.chat.id, text, reply_markup=markup, parse_mode="HTML")
+
+        bot.register_next_step_handler(msg, _email_step)
         bot.answer_callback_query(call.id)
 
 
