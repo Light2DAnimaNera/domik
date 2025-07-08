@@ -1,4 +1,5 @@
 import telebot
+import re
 from telebot import types
 
 from shared.env import DSS_FORUM_ID
@@ -59,9 +60,16 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.from_user and message.from_user.is_bot:
             return
         user_id = get_user_by_topic(message.message_thread_id)
-        if not user_id and message.reply_to_message and message.reply_to_message.forward_from:
-            user_id = message.reply_to_message.forward_from.id
-            set_dss_topic(user_id, message.message_thread_id)
+        if not user_id and message.reply_to_message:
+            if message.reply_to_message.forward_from:
+                user_id = message.reply_to_message.forward_from.id
+            else:
+                text = message.reply_to_message.text or message.reply_to_message.caption or ""
+                match = re.search(r"ID:\s*(\d+)", text)
+                if match:
+                    user_id = int(match.group(1))
+            if user_id:
+                set_dss_topic(user_id, message.message_thread_id)
         if not user_id:
             return
         if message.reply_to_message and message.reply_to_message.id in _reply_map:
