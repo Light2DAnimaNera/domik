@@ -1,6 +1,7 @@
 import telebot
 import math
 import logging
+import re
 
 from shared.gpt_client import GptClient
 from shared.models import (
@@ -152,10 +153,20 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             if is_blocked(answer.from_user.id):
                 bot.send_message(answer.chat.id, "[SYSTEM] В доступе отказано.")
                 return
-            data = pending_email.pop(answer.from_user.id, None)
+            data = pending_email.get(answer.from_user.id)
             if data is None:
                 bot.send_message(answer.chat.id, "Попробуйте снова выполнить /recharge")
                 return
+            if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", answer.text or ""):
+                msg2 = bot.send_message(
+                    answer.chat.id,
+                    (
+                        "Email введен не верно, укажите корректный email. Он будет использован только для отправки фискального документа."
+                    ),
+                )
+                bot.register_next_step_handler(msg2, _email_step)
+                return
+            pending_email.pop(answer.from_user.id, None)
             amnt, creds = data
             try:
                 from shared.yookassa_payment import create_payment, add_pending
