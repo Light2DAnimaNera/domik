@@ -26,3 +26,4 @@ DSA_REPORT_CHAT_IDS = [
 ADMIN_USERNAMES = [
     u.strip() for u in os.getenv("ADMIN_USERNAME", "").split(",") if u.strip()
 ]
+DSS_FORUM_ID = int(os.getenv("DSS_FORUM_ID", "0"))

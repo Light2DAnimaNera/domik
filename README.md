@@ -2,11 +2,20 @@
 
 ## Запуск
 
+### Быстрый старт
+
+1. Установите Python 3.11 или новее с сайта python.org.
+2. Скачайте проект и распакуйте его в удобную папку.
+3. Откройте эту папку в командной строке и выполните `python -m venv venv`. Затем активируйте окружение.
+4. Установите зависимости: `pip install -r requirements.txt`.
+5. Создайте файл `.env` и впишите в него свои токены и ID чатов.
+6. Запустите бота командой `python run.py DSS` (или другой вариант из списка).
+
 1. Создайте и активируйте виртуальное окружение.
 2. Установите зависимости: `pip install -r requirements.txt`.
    Файл включает библиотеки `pytelegrambotapi`, `openai`, `python-dotenv`,
    `yookassa`, `requests` и `tzdata`.
-3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`, `DSA_REPORT_CHAT_ID`, `ADMIN_USERNAME`). Значение `DSA_REPORT_CHAT_ID` может содержать несколько ID чатов, разделённых запятыми.
+3. Создайте файл `.env` и заполните его своими ключами и токенами (`TELEGRAM_TOKEN_BOT1`, `TELEGRAM_TOKEN_BOT2`, `TELEGRAM_TOKEN_BOT3`, `OPENAI_API_KEY`, `PAYMENT_TOKEN`, `SHOP_ID`, `DSA_REPORT_CHAT_ID`, `ADMIN_USERNAME`, `DSS_FORUM_ID`). Значение `DSA_REPORT_CHAT_ID` может содержать несколько ID чатов, разделённых запятыми.
 4. Запустите нужного бота командой `python run.py DS` (или `DSA`, `DSS`). Или используйте `run_DS.bat`, `run_DSA.bat` или `run_DSS.bat`.
 5. В консоли появится сообщение вида «Запуск бота DS», где `DS` — выбранный бот.
 
