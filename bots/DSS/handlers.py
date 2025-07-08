@@ -11,6 +11,8 @@ from shared.models import (
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
+    _reply_map: dict[int, tuple[int, int]] = {}
+
     def ensure_topic(user: types.User, first_text: str | None) -> tuple[int, bool]:
         """Return topic id for user and flag whether it was created."""
         topic_id = get_dss_topic(user.id)
@@ -44,17 +46,28 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         topic_id, created = ensure_topic(message.from_user, message.text or "")
         if created:
             return
-        bot.copy_message(
+        msg_id = bot.copy_message(
             DSS_FORUM_ID,
             message.chat.id,
             message.id,
             message_thread_id=topic_id,
         )
+        _reply_map[msg_id.message_id] = (message.chat.id, message.id)
 
     @bot.message_handler(func=lambda m: m.chat.id == DSS_FORUM_ID and m.message_thread_id)
     def relay_operator(message: types.Message) -> None:
         if message.from_user and message.from_user.is_bot:
             return
         user_id = get_user_by_topic(message.message_thread_id)
-        if user_id:
+        if not user_id:
+            return
+        if message.reply_to_message and message.reply_to_message.id in _reply_map:
+            chat_id, reply_id = _reply_map[message.reply_to_message.id]
+            bot.copy_message(
+                chat_id,
+                message.chat.id,
+                message.id,
+                reply_to_message_id=reply_id,
+            )
+        else:
             bot.copy_message(user_id, message.chat.id, message.id)
