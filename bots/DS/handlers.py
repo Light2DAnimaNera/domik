@@ -1,5 +1,6 @@
 import telebot
 import math
+import logging
 
 from shared.gpt_client import GptClient
 from shared.models import (
@@ -145,7 +146,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             payment = create_payment(call.from_user.id, float(amount))
             add_pending(payment.id, call.from_user.id, float(amount), float(credits))
-        except Exception:
+        except Exception as exc:
+            logging.exception("Payment error: %s", exc)
             bot.send_message(call.message.chat.id, "Сервис оплаты недоступен")
             return
 

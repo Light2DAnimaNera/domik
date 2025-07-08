@@ -1,5 +1,11 @@
 import argparse
 import importlib
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 AVAILABLE_BOTS = {
     'DS': 'bots.DS.bot',
