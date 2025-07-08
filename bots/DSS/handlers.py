@@ -37,7 +37,13 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         return topic_id, created
     @bot.message_handler(commands=["start"])
     def cmd_start(message: types.Message) -> None:
-        bot.send_message(message.chat.id, "Привет, что интересует?")
+        bot.send_message(
+            message.chat.id,
+            (
+                "👤 ДОБРО ПОЖАЛОВАТЬ\n"
+                "Пожалуйста, опишите проблему или вопрос. Менеджер свяжется с вами в ближайшее время."
+            ),
+        )
 
     @bot.message_handler(func=lambda m: m.chat.type == "private")
     def forward_to_forum(message: types.Message) -> None:
