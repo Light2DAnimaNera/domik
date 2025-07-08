@@ -16,9 +16,9 @@ _cache: dict[str, tuple[float, float]] = {}
 
 # Token prices per 1 unit (before applying coefficient)
 # Cost of a request token
-REQUEST_TOKEN_PRICE = 0.0020
+REQUEST_TOKEN_PRICE = 0.0004
 # Cost of a response token
-RESPONSE_TOKEN_PRICE = 0.0005
+RESPONSE_TOKEN_PRICE = 0.0001
 
 def _get_setting(key: str) -> str:
     now = time.time()
