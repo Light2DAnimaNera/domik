@@ -106,15 +106,18 @@ def get_username(user_id: int) -> str:
 
 
 _dss_topic_cache: dict[int, int] = {}
+_passport_msg_cache: dict[int, int] = {}
 
 def _load_dss_topics() -> None:
     """Preload DSS topics from the database into memory."""
     conn = get_dss_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id, topic_id FROM topics")
-        for user_id, topic_id in cursor.fetchall():
+        cursor.execute("SELECT user_id, topic_id, passport_message_id FROM topics")
+        for user_id, topic_id, msg_id in cursor.fetchall():
             _dss_topic_cache[int(user_id)] = int(topic_id)
+            if msg_id:
+                _passport_msg_cache[int(msg_id)] = int(user_id)
     except sqlite3.Error:
         pass
     finally:
@@ -144,15 +147,17 @@ def get_dss_topic(user_id: int) -> int | None:
         conn.close()
 
 
-def set_dss_topic(user_id: int, topic_id: int) -> None:
+def set_dss_topic(user_id: int, topic_id: int, passport_message_id: int | None = None) -> None:
     conn = get_dss_connection()
     try:
         conn.execute(
-            "INSERT OR REPLACE INTO topics(user_id, topic_id) VALUES(?, ?)",
-            (user_id, topic_id),
+            "INSERT OR REPLACE INTO topics(user_id, topic_id, passport_message_id) VALUES(?, ?, ?)",
+            (user_id, topic_id, passport_message_id),
         )
         conn.commit()
         _dss_topic_cache[user_id] = topic_id
+        if passport_message_id:
+            _passport_msg_cache[passport_message_id] = user_id
     except sqlite3.Error:
         pass
     finally:
@@ -169,6 +174,28 @@ def get_user_by_topic(topic_id: int) -> int | None:
         )
         row = cursor.fetchone()
         return int(row[0]) if row else None
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
+
+
+def get_user_by_passport_msg(msg_id: int) -> int | None:
+    """Return user id linked with the given passport message id."""
+    if msg_id in _passport_msg_cache:
+        return _passport_msg_cache[msg_id]
+    conn = get_dss_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_id FROM topics WHERE passport_message_id=?",
+            (msg_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            _passport_msg_cache[msg_id] = int(row[0])
+            return int(row[0])
+        return None
     except sqlite3.Error:
         return None
     finally:

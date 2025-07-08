@@ -7,6 +7,7 @@ from shared.models import (
     get_dss_topic,
     set_dss_topic,
     get_user_by_topic,
+    get_user_by_passport_msg,
 )
 
 
@@ -23,7 +24,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 name=f"{user.first_name} {user.id}",
             )
             topic_id = topic.message_thread_id
-            set_dss_topic(user.id, topic_id)
             passport = (
                 f"Имя: {user.first_name}\n"
                 f"@{user.username or ''}\n"
@@ -31,7 +31,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             )
             if first_text:
                 passport += first_text
-            bot.send_message(DSS_FORUM_ID, passport, message_thread_id=topic_id)
+            intro = bot.send_message(DSS_FORUM_ID, passport, message_thread_id=topic_id)
+            set_dss_topic(user.id, topic_id, intro.message_id)
             created = True
         return topic_id, created
     @bot.message_handler(commands=["start"])
@@ -59,9 +60,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.from_user and message.from_user.is_bot:
             return
         user_id = get_user_by_topic(message.message_thread_id)
-        if not user_id and message.reply_to_message and message.reply_to_message.forward_from:
-            user_id = message.reply_to_message.forward_from.id
-            set_dss_topic(user_id, message.message_thread_id)
+        if not user_id and message.reply_to_message:
+            if message.reply_to_message.forward_from:
+                user_id = message.reply_to_message.forward_from.id
+                set_dss_topic(user_id, message.message_thread_id)
+            else:
+                user_id = get_user_by_passport_msg(message.reply_to_message.message_id)
         if not user_id:
             return
         if message.reply_to_message and message.reply_to_message.id in _reply_map:
