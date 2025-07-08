@@ -3,6 +3,7 @@ import sqlite3
 import telebot
 
 from .database import get_connection
+from .dss_database import get_dss_connection
 from .config import INITIAL_CREDITS
 
 
@@ -108,10 +109,10 @@ _dss_topic_cache: dict[int, int] = {}
 
 def _load_dss_topics() -> None:
     """Preload DSS topics from the database into memory."""
-    conn = get_connection()
+    conn = get_dss_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT user_id, topic_id FROM dss_topics")
+        cursor.execute("SELECT user_id, topic_id FROM topics")
         for user_id, topic_id in cursor.fetchall():
             _dss_topic_cache[int(user_id)] = int(topic_id)
     except sqlite3.Error:
@@ -125,11 +126,11 @@ _load_dss_topics()
 def get_dss_topic(user_id: int) -> int | None:
     if user_id in _dss_topic_cache:
         return _dss_topic_cache[user_id]
-    conn = get_connection()
+    conn = get_dss_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT topic_id FROM dss_topics WHERE user_id=?",
+            "SELECT topic_id FROM topics WHERE user_id=?",
             (user_id,),
         )
         row = cursor.fetchone()
@@ -144,10 +145,10 @@ def get_dss_topic(user_id: int) -> int | None:
 
 
 def set_dss_topic(user_id: int, topic_id: int) -> None:
-    conn = get_connection()
+    conn = get_dss_connection()
     try:
         conn.execute(
-            "INSERT OR REPLACE INTO dss_topics(user_id, topic_id) VALUES(?, ?)",
+            "INSERT OR REPLACE INTO topics(user_id, topic_id) VALUES(?, ?)",
             (user_id, topic_id),
         )
         conn.commit()
@@ -159,11 +160,11 @@ def set_dss_topic(user_id: int, topic_id: int) -> None:
 
 
 def get_user_by_topic(topic_id: int) -> int | None:
-    conn = get_connection()
+    conn = get_dss_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT user_id FROM dss_topics WHERE topic_id=?",
+            "SELECT user_id FROM topics WHERE topic_id=?",
             (topic_id,),
         )
         row = cursor.fetchone()

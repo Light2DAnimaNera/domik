@@ -112,17 +112,6 @@ def init_db() -> None:
         )
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS dss_topics (
-                user_id INTEGER PRIMARY KEY,
-                topic_id INTEGER UNIQUE
-            )
-            """
-        )
-        cursor.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_dss_topic_id ON dss_topics(topic_id)"
-        )
-        cursor.execute(
-            """
             CREATE TABLE IF NOT EXISTS usage_daily (
                 user_id INTEGER,
                 date TEXT,
