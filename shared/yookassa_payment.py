@@ -3,6 +3,7 @@ from __future__ import annotations
 from yookassa import Configuration, Payment
 from typing import Iterable, Optional
 from datetime import datetime
+import logging
 
 from .database import get_connection
 
@@ -62,9 +63,11 @@ def create_payment(user_id: int, amount: float, credits: Optional[float] = None)
             "description": f"User {user_id} recharge",
         }
     )
-    print(
-        f"Created payment {payment.id} for user {user_id} "
-        f"on amount {amount:.2f}"
+    logging.info(
+        "Created payment %s for user %s on amount %.2f",
+        payment.id,
+        user_id,
+        amount,
     )
     log_payment(payment.id, user_id, amount, payment.status, credits)
     return payment
@@ -73,7 +76,7 @@ def create_payment(user_id: int, amount: float, credits: Optional[float] = None)
 def payment_status(payment_id: str) -> str:
     """Return payment status."""
     payment = Payment.find_one(payment_id)
-    print(f"Payment {payment_id} status: {payment.status}")
+    logging.info("Payment %s status: %s", payment_id, payment.status)
     return payment.status
 
 
@@ -85,9 +88,12 @@ def add_pending(payment_id: str, user_id: int, amount: float, credits: float) ->
             (payment_id, user_id, amount, credits),
         )
         conn.commit()
-        print(
-            f"Pending payment {payment_id} registered for user {user_id} "
-            f"amount {amount:.2f} credits {credits:.0f}"
+        logging.info(
+            "Pending payment %s registered for user %s amount %.2f credits %.0f",
+            payment_id,
+            user_id,
+            amount,
+            credits,
         )
     finally:
         conn.close()
@@ -108,6 +114,6 @@ def remove_pending(payment_id: str) -> None:
     try:
         conn.execute("DELETE FROM pending_payments WHERE payment_id=?", (payment_id,))
         conn.commit()
-        print(f"Pending payment {payment_id} removed")
+        logging.info("Pending payment %s removed", payment_id)
     finally:
         conn.close()
