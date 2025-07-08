@@ -7,32 +7,32 @@ from shared.models import (
     get_dss_topic,
     set_dss_topic,
     get_user_by_topic,
-    get_user_by_passport_msg,
 )
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
     _reply_map: dict[int, tuple[int, int]] = {}
 
-    def ensure_topic(user: types.User, first_text: str | None) -> tuple[int, bool]:
+    def ensure_topic(user: types.User) -> tuple[int, bool]:
         """Return topic id for user and flag whether it was created."""
         topic_id = get_dss_topic(user.id)
         created = False
         if topic_id is None:
+            name_parts = [user.first_name]
+            if user.last_name:
+                name_parts.append(user.last_name)
+            topic_name = " ".join(name_parts) + f" \u2022 {user.id}"
             topic = bot.create_forum_topic(
                 DSS_FORUM_ID,
-                name=f"{user.first_name} {user.id}",
+                name=topic_name,
             )
             topic_id = topic.message_thread_id
-            passport = (
-                f"Имя: {user.first_name}\n"
-                f"@{user.username or ''}\n"
-                f"ID: {user.id}\n"
-            )
-            if first_text:
-                passport += first_text
-            intro = bot.send_message(DSS_FORUM_ID, passport, message_thread_id=topic_id)
-            set_dss_topic(user.id, topic_id, intro.message_id)
+            passport_lines = [f"Имя: {' '.join(name_parts)}"]
+            if user.username:
+                passport_lines.append(f"@{user.username}")
+            passport_lines.append(f"ID: {user.id}")
+            bot.send_message(DSS_FORUM_ID, "\n".join(passport_lines), message_thread_id=topic_id)
+            set_dss_topic(user.id, topic_id)
             created = True
         return topic_id, created
     @bot.message_handler(commands=["start"])
@@ -44,28 +44,25 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if message.content_type == "text" and message.text.startswith("/start"):
             return
         add_user_if_not_exists(message)
-        topic_id, created = ensure_topic(message.from_user, message.text or "")
-        if created:
-            return
-        msg_id = bot.forward_message(
+        topic_id, created = ensure_topic(message.from_user)
+        text = message.text or ""
+        name_parts = [message.from_user.first_name]
+        if message.from_user.last_name:
+            name_parts.append(message.from_user.last_name)
+        full_name = " ".join(name_parts)
+        formatted = f"[{full_name}] пишет:\n{text}"
+        msg = bot.send_message(
             DSS_FORUM_ID,
-            message.chat.id,
-            message.id,
+            formatted,
             message_thread_id=topic_id,
         )
-        _reply_map[msg_id.message_id] = (message.chat.id, message.id)
+        _reply_map[msg.message_id] = (message.chat.id, message.id)
 
     @bot.message_handler(func=lambda m: m.chat.id == DSS_FORUM_ID and m.message_thread_id)
     def relay_operator(message: types.Message) -> None:
         if message.from_user and message.from_user.is_bot:
             return
         user_id = get_user_by_topic(message.message_thread_id)
-        if not user_id and message.reply_to_message:
-            if message.reply_to_message.forward_from:
-                user_id = message.reply_to_message.forward_from.id
-                set_dss_topic(user_id, message.message_thread_id)
-            else:
-                user_id = get_user_by_passport_msg(message.reply_to_message.message_id)
         if not user_id:
             return
         if message.reply_to_message and message.reply_to_message.id in _reply_map:
