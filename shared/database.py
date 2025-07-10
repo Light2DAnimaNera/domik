@@ -1,5 +1,4 @@
 import sqlite3
-import threading
 
 from .config import DB_PATH
 
@@ -147,38 +146,18 @@ def init_db() -> None:
 
 
 
-class _ThreadLocalConnection(sqlite3.Connection):
-    """Connection subclass that clears thread-local reference on close."""
-
-    def close(self) -> None:  # type: ignore[override]
-        super().close()
-        if getattr(_local, "conn", None) is self:
-            delattr(_local, "conn")
-
-
-_local = threading.local()
-
-
 def get_connection() -> sqlite3.Connection:
-    """Return a SQLite connection bound to the current thread."""
-    conn = getattr(_local, "conn", None)
-    if conn is None:
-        conn = sqlite3.connect(
-            DB_PATH,
-            check_same_thread=False,
-            timeout=30,
-            factory=_ThreadLocalConnection,
-        )
-        _local.conn = conn
+    """Return a new SQLite connection."""
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
+    conn.row_factory = sqlite3.Row
     return conn
 
 
 def close_connection() -> None:
-    """Close the SQLite connection for the current thread, if it exists."""
-    conn = getattr(_local, "conn", None)
-    if conn is not None:
-        conn.close()
-        delattr(_local, "conn")
+    """Compatibility stub for closing connections (no-op)."""
+    pass
 
 
 init_db()
