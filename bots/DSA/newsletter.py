@@ -1,12 +1,13 @@
 import telebot
 import threading
 import time
-import logging
+import logging, traceback
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from shared.database import get_connection
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 # хранит состояние рассылки для каждого администратора
@@ -43,8 +44,7 @@ def start_newsletter(user_id: int, audience: int) -> None:
     """Запомнить выбранную аудиторию."""
     logger.info("Start newsletter uid=%s audience=%s", user_id, audience)
     _drafts[user_id] = {"audience": audience}
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         now = datetime.now(ZoneInfo("Europe/Moscow")).isoformat()
         cursor.execute(
@@ -56,8 +56,6 @@ def start_newsletter(user_id: int, audience: int) -> None:
         )
         conn.commit()
         _drafts[user_id]["db_id"] = cursor.lastrowid
-    finally:
-        conn.close()
 
 
 def save_draft(user_id: int, message: telebot.types.Message) -> None:
@@ -67,15 +65,12 @@ def save_draft(user_id: int, message: telebot.types.Message) -> None:
     newsletter_id = _drafts[user_id].get("db_id")
     if newsletter_id:
         content = message.html_text or message.text or message.caption or ""
-        conn = get_connection()
-        try:
+        with get_connection() as conn:
             conn.execute(
                 "UPDATE newsletters SET content=? WHERE id=?",
                 (content, newsletter_id),
             )
             conn.commit()
-        finally:
-            conn.close()
 
 
 def get_draft(user_id: int) -> telebot.types.Message | None:
@@ -87,15 +82,12 @@ def clear_draft(user_id: int) -> None:
         logger.info("Clearing draft for uid=%s", user_id)
         newsletter_id = _drafts[user_id].get("db_id")
         if newsletter_id:
-            conn = get_connection()
-            try:
+            with get_connection() as conn:
                 conn.execute(
                     "UPDATE newsletters SET status='canceled' WHERE id=?",
                     (newsletter_id,),
                 )
                 conn.commit()
-            finally:
-                conn.close()
         _drafts[user_id].pop("draft", None)
 
 
@@ -114,32 +106,25 @@ def set_schedule(user_id: int, send_time: datetime) -> None:
     data["send_time"] = send_time
     newsletter_id = data.get("db_id")
     if newsletter_id:
-        conn = get_connection()
-        try:
+        with get_connection() as conn:
             conn.execute(
                 "UPDATE newsletters SET scheduled_at=?, status='scheduled' WHERE id=?",
                 (send_time.isoformat(), newsletter_id),
             )
             conn.commit()
-        finally:
-            conn.close()
 
 
 def all_newsletter() -> list[int]:
     """Return all active users."""
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT telegram_id FROM users WHERE blocked=0")
         return [int(row[0]) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 def buyers_newsletter() -> list[int]:
     """Return users that have at least one successful top up."""
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -150,14 +135,11 @@ def buyers_newsletter() -> list[int]:
             """
         )
         return [int(row[0]) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 def low_balance_newsletter() -> list[int]:
     """Users with low balance and no top ups."""
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -168,16 +150,13 @@ def low_balance_newsletter() -> list[int]:
             """
         )
         return [int(row[0]) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 def idle_newsletter() -> list[int]:
     """Users who haven't started a new session for over a day."""
     tz = ZoneInfo("Europe/Moscow")
     threshold = (datetime.now(tz) - timedelta(days=1)).strftime("%m-%d-%y %H-%M")
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -191,14 +170,11 @@ def idle_newsletter() -> list[int]:
             (threshold,),
         )
         return [int(row[0]) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 def no_sessions_newsletter() -> list[int]:
     """Users with no sessions in the database."""
-    conn = get_connection()
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -209,8 +185,6 @@ def no_sessions_newsletter() -> list[int]:
             """
         )
         return [int(row[0]) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 _AUDIENCE_FUNC = {
@@ -255,16 +229,14 @@ def send_now(bot: telebot.TeleBot, user_id: int) -> None:
         return
     newsletter_id = data.get("db_id")
     if newsletter_id:
-        conn = get_connection()
-        try:
+        with get_connection() as conn:
             now = datetime.now(ZoneInfo("Europe/Moscow")).isoformat()
             conn.execute(
                 "UPDATE newsletters SET status='scheduled', scheduled_at=? WHERE id=?",
                 (now, newsletter_id),
             )
             conn.commit()
-        finally:
-            conn.close()
+
     _drafts.pop(user_id, None)
 
 
@@ -277,30 +249,32 @@ def schedule_newsletter(bot: telebot.TeleBot, user_id: int) -> None:
 
 def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
     tz = ZoneInfo("Europe/Moscow")
-    logger.info("Newsletter scheduler started")
+    logging.info("Newsletter scheduler started")
     while True:
-        now_iso = datetime.now(tz).isoformat()
-        conn = get_connection()
         try:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT id, audience, content FROM newsletters
-                WHERE status='scheduled' AND scheduled_at<=?
-                """,
-                (now_iso,),
-            )
-            rows = cursor.fetchall()
-            for newsletter_id, audience, content in rows:
-                logger.info("Sending scheduled newsletter %s to %s", newsletter_id, audience)
-                _send_text_to_audience(bot, audience, content or "")
+            now_iso = datetime.now(tz).isoformat()
+            with get_connection() as conn:
+                cursor = conn.cursor()
                 cursor.execute(
-                    "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
-                    (datetime.now(tz).isoformat(), newsletter_id),
+                    """
+                    SELECT id, audience, content FROM newsletters
+                    WHERE status='scheduled' AND scheduled_at<=?
+                    """,
+                    (now_iso,),
                 )
-                conn.commit()
-        finally:
-            conn.close()
+                rows = cursor.fetchall()
+
+            for newsletter_id, audience, content in rows:
+                logging.info("Sending scheduled newsletter %s to %s", newsletter_id, audience)
+                _send_text_to_audience(bot, audience, content or "")
+                with get_connection() as conn:
+                    conn.execute(
+                        "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
+                        (datetime.now(tz).isoformat(), newsletter_id),
+                    )
+                    conn.commit()
+        except Exception:
+            logging.exception("Ошибка в планировщике")
         time.sleep(60)
 
 
