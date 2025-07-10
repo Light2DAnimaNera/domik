@@ -285,7 +285,7 @@ def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
                     "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
                     (datetime.now(tz).isoformat(), newsletter_id),
                 )
-            conn.commit()
+                conn.commit()
         finally:
             conn.close()
         time.sleep(60)
