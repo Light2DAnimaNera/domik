@@ -30,16 +30,16 @@ def get_daily_stats(report_date: date) -> dict[str, float | int]:
         cursor.execute(
             """
             SELECT COALESCE(SUM(amount), 0)
-            FROM recharge r
-            WHERE substr(r.timestamp, 1, 10)=?
-              AND r.user_id IN (
-                    SELECT user_id
-                    FROM recharge
-                    GROUP BY user_id
-                    HAVING substr(MIN(timestamp),1,10)=?
-              )
+            FROM (
+                SELECT r.amount,
+                       r.timestamp,
+                       MIN(r.timestamp) OVER (PARTITION BY r.user_id) AS first_time
+                FROM recharge r
+            ) AS tmp
+            WHERE tmp.timestamp = tmp.first_time
+              AND substr(tmp.timestamp, 1, 10)=?
             """,
-            (date_str, date_str),
+            (date_str,),
         )
         first_payments_sum = float(cursor.fetchone()[0] or 0.0)
 
