@@ -1,7 +1,7 @@
 import telebot
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from shared.database import get_connection
@@ -118,7 +118,8 @@ def set_schedule(user_id: int, send_time: datetime) -> None:
             conn.close()
 
 
-def _get_all_user_ids() -> list[int]:
+def all_newsletter() -> list[int]:
+    """Return all active users."""
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -128,9 +129,100 @@ def _get_all_user_ids() -> list[int]:
         conn.close()
 
 
+def buyers_newsletter() -> list[int]:
+    """Return users that have at least one successful top up."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT DISTINCT u.telegram_id
+            FROM users u
+            JOIN recharge r ON r.user_id = u.telegram_id
+            WHERE u.blocked=0
+            """
+        )
+        return [int(row[0]) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def low_balance_newsletter() -> list[int]:
+    """Users with low balance and no top ups."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT u.telegram_id
+            FROM users u
+            LEFT JOIN recharge r ON r.user_id = u.telegram_id
+            WHERE u.blocked=0 AND u.credits < 20 AND r.user_id IS NULL
+            """
+        )
+        return [int(row[0]) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def idle_newsletter() -> list[int]:
+    """Users who haven't started a new session for over a day."""
+    tz = ZoneInfo("Europe/Moscow")
+    threshold = (datetime.now(tz) - timedelta(days=1)).strftime("%m-%d-%y %H-%M")
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT s.telegram_id, MAX(s.date_start) AS last_start
+            FROM sessions s
+            JOIN users u ON u.telegram_id = s.telegram_id
+            WHERE u.blocked=0
+            GROUP BY s.telegram_id
+            HAVING last_start <= ?
+            """,
+            (threshold,),
+        )
+        return [int(row[0]) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def no_sessions_newsletter() -> list[int]:
+    """Users with no sessions in the database."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT u.telegram_id
+            FROM users u
+            LEFT JOIN sessions s ON s.telegram_id = u.telegram_id
+            WHERE u.blocked=0 AND s.id IS NULL
+            """
+        )
+        return [int(row[0]) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+_AUDIENCE_FUNC = {
+    "all": all_newsletter,
+    "buyers": buyers_newsletter,
+    "low_balance": low_balance_newsletter,
+    "idle": idle_newsletter,
+    "no_sessions": no_sessions_newsletter,
+}
+
+
+def _resolve_audience(audience: int | str) -> list[int]:
+    code = AUDIENCE_CODES.get(audience, audience) if isinstance(audience, int) else audience
+    func = _AUDIENCE_FUNC.get(code, all_newsletter)
+    return func()
+
+
 def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Message) -> None:
-    # пока отправляем всем пользователям
-    for user_id in _get_all_user_ids():
+    for user_id in _resolve_audience(audience):
         try:
             bot.copy_message(user_id, msg.chat.id, msg.message_id)
         except Exception:
@@ -139,7 +231,7 @@ def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Me
 
 def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> None:
     """Отправить текстовую рассылку указанной аудитории."""
-    for user_id in _get_all_user_ids():
+    for user_id in _resolve_audience(audience):
         try:
             bot.send_message(user_id, text, parse_mode="HTML")
         except Exception:
