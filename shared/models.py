@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import sqlite3
 import telebot
 
@@ -19,7 +20,8 @@ def add_user_if_not_exists(message: telebot.types.Message) -> None:
             (telegram_id,),
         )
         if cursor.fetchone() is None:
-            date_joined = datetime.now().date().isoformat()
+            tz = ZoneInfo("Europe/Moscow")
+            date_joined = datetime.now(tz).date().isoformat()
             cursor.execute(
                 """
                 INSERT INTO users (telegram_id, username, first_name, date_joined, credits, blocked)
