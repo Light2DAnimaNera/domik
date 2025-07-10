@@ -17,6 +17,7 @@ from .bot_commands import setup_default_commands
 from shared.session_manager import SessionManager
 from shared.middlewares_error import ErrorMiddleware
 from shared.middlewares_activity import ActivityMiddleware
+from bots.DSA.newsletter import start_newsletter_scheduler
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN, use_class_middlewares=True, num_threads=30)
 bot.setup_middleware(ErrorMiddleware())
@@ -98,6 +99,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _stop_bot)
     threading.Thread(target=_session_monitor, daemon=True).start()
     threading.Thread(target=_payment_monitor, daemon=True).start()
+    start_newsletter_scheduler(bot)
     try:
         bot.infinity_polling(logger_level=None)
     except KeyboardInterrupt:
