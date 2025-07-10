@@ -99,7 +99,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _stop_bot)
     threading.Thread(target=_session_monitor, daemon=True).start()
     threading.Thread(target=_payment_monitor, daemon=True).start()
-    start_newsletter_scheduler(bot)
+    start_newsletter_scheduler(bot, dsa_bot)
     try:
         bot.infinity_polling(logger_level=None)
     except KeyboardInterrupt:
