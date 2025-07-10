@@ -1,10 +1,13 @@
 import telebot
 import threading
 import time
+import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from shared.database import get_connection
+
+logger = logging.getLogger(__name__)
 
 # хранит состояние рассылки для каждого администратора
 _drafts: dict[int, dict] = {}
@@ -38,6 +41,7 @@ def show_audience_keyboard(bot: telebot.TeleBot, chat_id: int) -> telebot.types.
 
 def start_newsletter(user_id: int, audience: int) -> None:
     """Запомнить выбранную аудиторию."""
+    logger.info("Start newsletter uid=%s audience=%s", user_id, audience)
     _drafts[user_id] = {"audience": audience}
     conn = get_connection()
     try:
@@ -58,6 +62,7 @@ def start_newsletter(user_id: int, audience: int) -> None:
 
 def save_draft(user_id: int, message: telebot.types.Message) -> None:
     """Сохранить черновик сообщения."""
+    logger.info("Saving draft for uid=%s", user_id)
     _drafts.setdefault(user_id, {})["draft"] = message
     newsletter_id = _drafts[user_id].get("db_id")
     if newsletter_id:
@@ -79,6 +84,7 @@ def get_draft(user_id: int) -> telebot.types.Message | None:
 
 def clear_draft(user_id: int) -> None:
     if user_id in _drafts:
+        logger.info("Clearing draft for uid=%s", user_id)
         newsletter_id = _drafts[user_id].get("db_id")
         if newsletter_id:
             conn = get_connection()
@@ -103,6 +109,7 @@ def parse_schedule(text: str) -> datetime | None:
 
 
 def set_schedule(user_id: int, send_time: datetime) -> None:
+    logger.info("Set schedule for uid=%s at %s", user_id, send_time.isoformat())
     data = _drafts.setdefault(user_id, {})
     data["send_time"] = send_time
     newsletter_id = data.get("db_id")
@@ -224,22 +231,25 @@ def _resolve_audience(audience: int | str) -> list[int]:
 def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Message) -> None:
     for user_id in _resolve_audience(audience):
         try:
+            logger.debug("Sending copy to %s", user_id)
             bot.copy_message(user_id, msg.chat.id, msg.message_id)
         except Exception:
-            pass
+            logger.warning("Failed to send message to %s", user_id)
 
 
 def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> None:
     """Отправить текстовую рассылку указанной аудитории."""
     for user_id in _resolve_audience(audience):
         try:
+            logger.debug("Sending text to %s", user_id)
             bot.send_message(user_id, text, parse_mode="HTML")
         except Exception:
-            pass
+            logger.warning("Failed to send message to %s", user_id)
 
 
 def send_now(bot: telebot.TeleBot, user_id: int) -> None:
     """Поставить рассылку в очередь немедленной отправки."""
+    logger.info("Immediate send queued for uid=%s", user_id)
     data = _drafts.get(user_id)
     if not data or "draft" not in data:
         return
@@ -261,11 +271,13 @@ def send_now(bot: telebot.TeleBot, user_id: int) -> None:
 def schedule_newsletter(bot: telebot.TeleBot, user_id: int) -> None:
     """Завершает работу с черновиком. Отправка произойдет фоновым планировщиком."""
     if user_id in _drafts:
+        logger.info("Newsletter scheduled for uid=%s", user_id)
         _drafts.pop(user_id, None)
 
 
 def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
     tz = ZoneInfo("Europe/Moscow")
+    logger.info("Newsletter scheduler started")
     while True:
         now_iso = datetime.now(tz).isoformat()
         conn = get_connection()
@@ -280,6 +292,7 @@ def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
             )
             rows = cursor.fetchall()
             for newsletter_id, audience, content in rows:
+                logger.info("Sending scheduled newsletter %s to %s", newsletter_id, audience)
                 _send_text_to_audience(bot, audience, content or "")
                 cursor.execute(
                     "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
@@ -292,4 +305,5 @@ def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
 
 
 def start_newsletter_scheduler(bot: telebot.TeleBot) -> None:
+    logger.info("Starting newsletter scheduler thread")
     threading.Thread(target=_newsletter_scheduler, args=(bot,), daemon=True).start()

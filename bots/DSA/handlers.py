@@ -1,8 +1,11 @@
 import telebot
+import logging
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from shared.env import ADMIN_USERNAMES
+
+logger = logging.getLogger(__name__)
 
 _admins = [u.lower() for u in ADMIN_USERNAMES]
 from shared.reports import format_daily_report
@@ -23,7 +26,9 @@ def admin_only(func):
         username = (message.from_user.username or "").lower()
         if username not in _admins:
             message.bot.send_message(message.chat.id, "⛔ Доступ запрещен")
+            logger.warning("Unauthorized access attempt by @%s", username)
             return
+        logger.info("%s invoked %s", username, func.__name__)
         return func(message)
 
     return wrapper
@@ -33,27 +38,32 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["start"])
     @admin_only
     def cmd_start(message: telebot.types.Message) -> None:
+        logger.info("/start from %s", message.from_user.username)
         bot.send_message(message.chat.id, "Bot2 says hi")
 
     @bot.message_handler(commands=["report"])
     @admin_only
     def cmd_report(message: telebot.types.Message) -> None:
+        logger.info("/report from %s", message.from_user.username)
         report = format_daily_report(date.today())
         bot.send_message(message.chat.id, report)
 
     @bot.message_handler(commands=["newsletter"])
     @admin_only
     def cmd_newsletter(message: telebot.types.Message) -> None:
+        logger.info("/newsletter from %s", message.from_user.username)
         msg = show_audience_keyboard(bot, message.chat.id)
 
         def _audience_reply(answer: telebot.types.Message) -> None:
             if answer.text not in {"1", "2", "3", "4", "5"}:
                 bot.send_message(answer.chat.id, "Введите цифру от 1 до 5")
                 return
+            logger.info("Selected audience %s for user %s", answer.text, answer.from_user.username)
             start_newsletter(answer.from_user.id, int(answer.text))
             msg2 = bot.send_message(answer.chat.id, "Пришлите пост для рассылки")
 
             def _draft_reply(post: telebot.types.Message) -> None:
+                logger.info("Draft saved from %s", post.from_user.username)
                 save_draft(post.from_user.id, post)
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.row(
@@ -70,6 +80,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def newsletter_callbacks(call: telebot.types.CallbackQuery) -> None:
         bot.answer_callback_query(call.id)
         if call.data == "draft_ok":
+            logger.info("Draft confirmed by %s", call.from_user.username)
             bot.send_message(call.message.chat.id, "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u043f\u0440\u0438\u043d\u044f\u0442")
             markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
             markup.row("\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441")
@@ -78,6 +89,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             def _time_choice(answer: telebot.types.Message) -> None:
                 if answer.text == "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441":
+                    logger.info("Immediate send requested by %s", answer.from_user.username)
                     send_now(bot, answer.from_user.id)
                     bot.send_message(answer.chat.id, "Сообщение отправлено")
                 else:
@@ -90,6 +102,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                             bot.send_message(msg2.chat.id, "Неверный формат. Попробуйте ещё раз")
                             bot.register_next_step_handler(msg2, _schedule_reply)
                             return
+                        logger.info("Scheduled newsletter from %s at %s", msg2.from_user.username, dt.isoformat())
                         set_schedule(msg2.from_user.id, dt)
                         schedule_newsletter(bot, msg2.from_user.id)
                         bot.send_message(msg2.chat.id, f"Запланировано на {dt.strftime('%d.%m.%Y %H:%M')}")
@@ -98,10 +111,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             bot.register_next_step_handler(msg, _time_choice)
         else:
+            logger.info("Draft editing requested by %s", call.from_user.username)
             clear_draft(call.from_user.id)
             msg = bot.send_message(call.message.chat.id, "Пришлите новый пост")
 
             def _draft_reply(post: telebot.types.Message) -> None:
+                logger.info("Draft updated by %s", post.from_user.username)
                 save_draft(post.from_user.id, post)
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.row(
