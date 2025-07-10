@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from shared.database import get_connection
+from shared.env import DSA_REPORT_CHAT_IDS
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -247,7 +248,7 @@ def schedule_newsletter(bot: telebot.TeleBot, user_id: int) -> None:
         _drafts.pop(user_id, None)
 
 
-def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
+def _newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | None = None) -> None:
     tz = ZoneInfo("Europe/Moscow")
     logging.info("Newsletter scheduler started")
     while True:
@@ -273,11 +274,21 @@ def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
                         (datetime.now(tz).isoformat(), newsletter_id),
                     )
                     conn.commit()
+                if notify_bot:
+                    for chat_id in DSA_REPORT_CHAT_IDS:
+                        try:
+                            notify_bot.send_message(chat_id, f"рассылка с id={newsletter_id} отправлена")
+                        except Exception:
+                            logging.exception("Failed to notify chat %s", chat_id)
         except Exception:
             logging.exception("Ошибка в планировщике")
         time.sleep(60)
 
 
-def start_newsletter_scheduler(bot: telebot.TeleBot) -> None:
+def start_newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | None = None) -> None:
     logger.info("Starting newsletter scheduler thread")
-    threading.Thread(target=_newsletter_scheduler, args=(bot,), daemon=True).start()
+    threading.Thread(
+        target=_newsletter_scheduler,
+        args=(bot, notify_bot),
+        daemon=True,
+    ).start()

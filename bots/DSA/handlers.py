@@ -91,7 +91,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 if answer.text == "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441":
                     logger.info("Immediate send requested by %s", answer.from_user.username)
                     send_now(bot, answer.from_user.id)
-                    bot.send_message(answer.chat.id, "Сообщение отправлено")
                 else:
                     bot.send_message(answer.chat.id, "Укажите дату и время в формате DD.MM.YYYY HH:MM (МСК)")
 
