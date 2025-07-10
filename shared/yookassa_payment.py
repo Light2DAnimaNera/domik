@@ -30,7 +30,7 @@ def log_payment(
             (payment_id,),
         )
         row = cur.fetchone()
-        ts = datetime.now().strftime("%m-%d-%y %H-%M")
+        ts = datetime.now().isoformat(timespec="minutes")
         if row is None:
             cur.execute(
                 "INSERT INTO payments(payment_id, user_id, amount, credits, status, timestamp) VALUES(?, ?, ?, ?, ?, ?)",

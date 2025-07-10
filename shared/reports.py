@@ -19,8 +19,8 @@ def get_daily_stats(report_date: date) -> dict[str, float | int]:
         new_users = cursor.fetchone()[0] or 0
 
         cursor.execute(
-            "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM recharge "
-            "WHERE substr(timestamp, 1, 10) = ?",
+            "SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM payments "
+            "WHERE status='succeeded' AND substr(timestamp, 1, 10)=?",
             (date_str,),
         )
         row = cursor.fetchone()
@@ -31,10 +31,11 @@ def get_daily_stats(report_date: date) -> dict[str, float | int]:
             """
             SELECT COALESCE(SUM(amount), 0)
             FROM (
-                SELECT r.amount,
-                       r.timestamp,
-                       MIN(r.timestamp) OVER (PARTITION BY r.user_id) AS first_time
-                FROM recharge r
+                SELECT p.amount,
+                       p.timestamp,
+                       MIN(p.timestamp) OVER (PARTITION BY p.user_id) AS first_time
+                FROM payments p
+                WHERE p.status='succeeded'
             ) AS tmp
             WHERE tmp.timestamp = tmp.first_time
               AND substr(tmp.timestamp, 1, 10)=?
