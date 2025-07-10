@@ -239,22 +239,23 @@ def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> No
 
 
 def send_now(bot: telebot.TeleBot, user_id: int) -> None:
+    """Поставить рассылку в очередь немедленной отправки."""
     data = _drafts.get(user_id)
     if not data or "draft" not in data:
         return
-    _send_to_audience(bot, data.get("audience", 1), data["draft"])
     newsletter_id = data.get("db_id")
     if newsletter_id:
         conn = get_connection()
         try:
             now = datetime.now(ZoneInfo("Europe/Moscow")).isoformat()
             conn.execute(
-                "UPDATE newsletters SET status='sent', scheduled_at=?, sent_at=? WHERE id=?",
-                (now, now, newsletter_id),
+                "UPDATE newsletters SET status='scheduled', scheduled_at=? WHERE id=?",
+                (now, newsletter_id),
             )
             conn.commit()
         finally:
             conn.close()
+    _drafts.pop(user_id, None)
 
 
 def schedule_newsletter(bot: telebot.TeleBot, user_id: int) -> None:
