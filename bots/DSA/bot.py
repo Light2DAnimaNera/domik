@@ -7,7 +7,6 @@ import telebot
 from shared.env import TELEGRAM_TOKEN_BOT2, DSA_REPORT_CHAT_IDS
 from shared.reports import format_daily_report
 from .bot_commands import setup_default_commands
-from .newsletter import start_newsletter_scheduler
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT2)
 
@@ -34,7 +33,6 @@ def _report_scheduler() -> None:
 
 def main() -> None:
     threading.Thread(target=_report_scheduler, daemon=True).start()
-    start_newsletter_scheduler(bot)
     bot.infinity_polling(logger_level=None)
 
 
