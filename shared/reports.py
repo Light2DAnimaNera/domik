@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from .database import get_connection
 
@@ -55,8 +56,18 @@ def get_daily_stats(report_date: date) -> dict[str, float | int]:
 def format_daily_report(report_date: date) -> str:
     """Return formatted text report for the given date."""
     stats = get_daily_stats(report_date)
+
+    months = [
+        "", "января", "февраля", "марта", "апреля", "мая", "июня",
+        "июля", "августа", "сентября", "октября", "ноября", "декабря",
+    ]
+    tz = ZoneInfo("Europe/Moscow")
+    now = datetime.now(tz)
+    month_name = months[report_date.month]
+    header = f"ОТЧЕТ ЗА {report_date.day} {month_name}, {now.strftime('%H:%M')}"
+
     report_lines = [
-        f"ОТЧЕТ ЗА {report_date.strftime('%m-%d-%y')}",
+        header,
         "",
         f"Новых пользователей: {stats['new_users']}",
         f"Совершено платежей: {stats['payments_count']}",
