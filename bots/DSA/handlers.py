@@ -5,6 +5,7 @@ from shared.env import ADMIN_USERNAMES
 
 _admins = [u.lower() for u in ADMIN_USERNAMES]
 from shared.reports import format_daily_report
+from .newsletter import show_audience_keyboard
 
 
 def admin_only(func):
@@ -29,3 +30,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def cmd_report(message: telebot.types.Message) -> None:
         report = format_daily_report(date.today())
         bot.send_message(message.chat.id, report)
+
+    @bot.message_handler(commands=["newsletter"])
+    @admin_only
+    def cmd_newsletter(message: telebot.types.Message) -> None:
+        show_audience_keyboard(bot, message.chat.id)
