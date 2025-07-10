@@ -1,5 +1,6 @@
 import telebot
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from shared.env import ADMIN_USERNAMES
 
@@ -10,6 +11,10 @@ from .newsletter import (
     start_newsletter,
     save_draft,
     clear_draft,
+    parse_schedule,
+    set_schedule,
+    send_now,
+    schedule_newsletter,
 )
 
 
@@ -66,6 +71,32 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         bot.answer_callback_query(call.id)
         if call.data == "draft_ok":
             bot.send_message(call.message.chat.id, "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u043f\u0440\u0438\u043d\u044f\u0442")
+            markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+            markup.row("\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441")
+            markup.row("\u041e\u0442\u043b\u043e\u0436\u0435\u043d\u043d\u044b\u0439 \u0437\u0430\u043f\u0443\u0441\u043a")
+            msg = bot.send_message(call.message.chat.id, "Когда отправить пост?", reply_markup=markup)
+
+            def _time_choice(answer: telebot.types.Message) -> None:
+                if answer.text == "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441":
+                    send_now(bot, answer.from_user.id)
+                    bot.send_message(answer.chat.id, "Сообщение отправлено")
+                else:
+                    bot.send_message(answer.chat.id, "Укажите дату и время в формате DD.MM.YYYY HH:MM (МСК)")
+
+                    def _schedule_reply(msg2: telebot.types.Message) -> None:
+                        dt = parse_schedule(msg2.text)
+                        tz = ZoneInfo("Europe/Moscow")
+                        if not dt or dt < datetime.now(tz):
+                            bot.send_message(msg2.chat.id, "Неверный формат. Попробуйте ещё раз")
+                            bot.register_next_step_handler(msg2, _schedule_reply)
+                            return
+                        set_schedule(msg2.from_user.id, dt)
+                        schedule_newsletter(bot, msg2.from_user.id)
+                        bot.send_message(msg2.chat.id, f"Запланировано на {dt.strftime('%d.%m.%Y %H:%M')}")
+
+                    bot.register_next_step_handler(answer, _schedule_reply)
+
+            bot.register_next_step_handler(msg, _time_choice)
         else:
             clear_draft(call.from_user.id)
             msg = bot.send_message(call.message.chat.id, "Пришлите новый пост")
