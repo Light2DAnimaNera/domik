@@ -137,6 +137,15 @@ def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Me
             pass
 
 
+def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> None:
+    """Отправить текстовую рассылку указанной аудитории."""
+    for user_id in _get_all_user_ids():
+        try:
+            bot.send_message(user_id, text, parse_mode="HTML")
+        except Exception:
+            pass
+
+
 def send_now(bot: telebot.TeleBot, user_id: int) -> None:
     data = _drafts.get(user_id)
     if not data or "draft" not in data:
@@ -157,27 +166,37 @@ def send_now(bot: telebot.TeleBot, user_id: int) -> None:
 
 
 def schedule_newsletter(bot: telebot.TeleBot, user_id: int) -> None:
-    data = _drafts.get(user_id)
-    if not data or "draft" not in data or "send_time" not in data:
-        return
+    """Завершает работу с черновиком. Отправка произойдет фоновым планировщиком."""
+    if user_id in _drafts:
+        _drafts.pop(user_id, None)
 
-    def _worker() -> None:
-        tz = ZoneInfo("Europe/Moscow")
-        delay = (data["send_time"] - datetime.now(tz)).total_seconds()
-        if delay > 0:
-            time.sleep(delay)
-        _send_to_audience(bot, data.get("audience", 1), data["draft"])
-        newsletter_id = data.get("db_id")
-        if newsletter_id:
-            conn = get_connection()
-            try:
-                now = datetime.now(tz).isoformat()
-                conn.execute(
+
+def _newsletter_scheduler(bot: telebot.TeleBot) -> None:
+    tz = ZoneInfo("Europe/Moscow")
+    while True:
+        now_iso = datetime.now(tz).isoformat()
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, audience, content FROM newsletters
+                WHERE status='scheduled' AND scheduled_at<=?
+                """,
+                (now_iso,),
+            )
+            rows = cursor.fetchall()
+            for newsletter_id, audience, content in rows:
+                _send_text_to_audience(bot, audience, content or "")
+                cursor.execute(
                     "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
-                    (now, newsletter_id),
+                    (datetime.now(tz).isoformat(), newsletter_id),
                 )
-                conn.commit()
-            finally:
-                conn.close()
+            conn.commit()
+        finally:
+            conn.close()
+        time.sleep(60)
 
-    threading.Thread(target=_worker, daemon=True).start()
+
+def start_newsletter_scheduler(bot: telebot.TeleBot) -> None:
+    threading.Thread(target=_newsletter_scheduler, args=(bot,), daemon=True).start()
