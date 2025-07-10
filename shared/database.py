@@ -121,6 +121,20 @@ def init_db() -> None:
             """
         )
         cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS newsletters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audience TEXT,
+                content TEXT,
+                image_path TEXT,
+                scheduled_at TEXT,
+                sent_at TEXT,
+                status TEXT,
+                created_at TEXT
+            )
+            """
+        )
+        cursor.execute(
             "INSERT OR IGNORE INTO settings(key, value) VALUES('token_cost_coeff', '12.0')"
         )
         conn.commit()
