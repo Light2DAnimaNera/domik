@@ -315,3 +315,39 @@ def start_newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot
         args=(bot, notify_bot),
         daemon=True,
     ).start()
+
+
+def list_all_newsletters() -> list[tuple]:
+    """Return all newsletter records."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, COALESCE(scheduled_at, created_at) AS dt, audience, status, content
+            FROM newsletters
+            ORDER BY id DESC
+            """
+        )
+        return cursor.fetchall()
+
+
+def cancel_newsletter(newsletter_id: int) -> None:
+    """Set newsletter status to canceled."""
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE newsletters SET status='canceled' WHERE id=?",
+            (newsletter_id,),
+        )
+        conn.commit()
+
+
+def get_newsletter_content(newsletter_id: int) -> str | None:
+    """Return saved newsletter content."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT content FROM newsletters WHERE id=?",
+            (newsletter_id,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None

@@ -9,6 +9,11 @@ from shared.models import (
     set_dss_topic,
     get_user_by_topic,
 )
+from bots.DSA.newsletter import (
+    list_all_newsletters,
+    cancel_newsletter,
+    get_newsletter_content,
+)
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
@@ -82,3 +87,37 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             )
         else:
             ds_bot.copy_message(user_id, message.chat.id, message.id)
+
+    @bot.message_handler(commands=["nl_list"])
+    def cmd_nl_list(message: types.Message) -> None:
+        rows = list_all_newsletters()
+        if not rows:
+            bot.send_message(message.chat.id, "список пуст")
+            return
+        lines = []
+        for row in rows:
+            dt = (row[1] or "").replace("T", " ")
+            preview = (row[4] or "").replace("\n", " ")[:30]
+            lines.append(f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb")
+        bot.send_message(message.chat.id, "\n".join(lines))
+
+    @bot.message_handler(commands=["nl_cancel"])
+    def cmd_nl_cancel(message: types.Message) -> None:
+        parts = message.text.split()
+        if len(parts) < 2 or not parts[1].isdigit():
+            bot.send_message(message.chat.id, "Укажите id: /nl_cancel <id>")
+            return
+        cancel_newsletter(int(parts[1]))
+        bot.send_message(message.chat.id, "OK")
+
+    @bot.message_handler(commands=["nl_show"])
+    def cmd_nl_show(message: types.Message) -> None:
+        parts = message.text.split()
+        if len(parts) < 2 or not parts[1].isdigit():
+            bot.send_message(message.chat.id, "Укажите id: /nl_show <id>")
+            return
+        content = get_newsletter_content(int(parts[1]))
+        if not content:
+            bot.send_message(message.chat.id, "не найдено")
+        else:
+            bot.send_message(message.chat.id, content, parse_mode="HTML")
