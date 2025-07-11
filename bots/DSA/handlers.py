@@ -91,6 +91,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if call.data == "send_now":
             logger.info("Immediate send requested by %s", call.from_user.username)
             send_now(bot, call.from_user.id)
+            bot.send_message(call.message.chat.id,
+                             "\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0431\u0443\u0434\u0443\u0442 \u0440\u0430\u0437\u043e\u0441\u043b\u0430\u043d\u044b \u0441\u043e\u0433\u043b\u0430\u0441\u043d\u043e \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u043c \u043a\u0440\u0438\u0442\u0435\u0440\u0438\u044f\u043c")
             return
         if call.data == "send_later":
             msg = bot.send_message(call.message.chat.id, "Укажите дату и время в формате DD.MM.YYYY HH:MM (МСК)")
@@ -106,6 +108,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 set_schedule(msg2.from_user.id, dt)
                 schedule_newsletter(bot, msg2.from_user.id)
                 bot.send_message(msg2.chat.id, f"Запланировано на {dt.strftime('%d.%m.%Y %H:%M')}")
+                bot.send_message(
+                    msg2.chat.id,
+                    "\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0431\u0443\u0434\u0443\u0442 \u0440\u0430\u0437\u043e\u0441\u043b\u0430\u043d\u044b \u0441\u043e\u0433\u043b\u0430\u0441\u043d\u043e \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u043c \u043a\u0440\u0438\u0442\u0435\u0440\u0438\u044f\u043c",
+                )
 
             bot.register_next_step_handler(msg, _schedule_reply)
             return
