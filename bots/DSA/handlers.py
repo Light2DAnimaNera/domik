@@ -19,6 +19,9 @@ from .newsletter import (
     send_now,
     schedule_newsletter,
     AUDIENCE_OPTIONS,
+    list_all_newsletters,
+    cancel_newsletter,
+    get_newsletter_content,
 )
 
 
@@ -138,4 +141,82 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 bot.copy_message(post.chat.id, post.chat.id, post.message_id, reply_markup=markup)
 
             bot.register_next_step_handler(msg, _draft_reply)
+
+    @bot.message_handler(commands=["nl_list"])
+    @admin_only
+    def cmd_nl_list(message: telebot.types.Message) -> None:
+        rows = list_all_newsletters()
+        if not rows:
+            bot.send_message(message.chat.id, "список пуст")
+            return
+        lines = []
+        for row in rows:
+            dt = (row[1] or "").replace("T", " ")
+            preview = (row[4] or "").replace("\n", " ")[:30]
+            lines.append(f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb")
+        bot.send_message(message.chat.id, "\n".join(lines))
+
+    @bot.message_handler(commands=["nl_cancel"])
+    @admin_only
+    def cmd_nl_cancel(message: telebot.types.Message) -> None:
+        parts = message.text.split()
+        if len(parts) < 2 or not parts[1].isdigit():
+            rows = list_all_newsletters()
+            if rows:
+                lines = []
+                for row in rows:
+                    dt = (row[1] or "").replace("T", " ")
+                    preview = (row[4] or "").replace("\n", " ")[:30]
+                    lines.append(
+                        f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb"
+                    )
+                bot.send_message(message.chat.id, "\n".join(lines))
+            msg = bot.send_message(message.chat.id, "Укажите id рассылки")
+
+            def _id_reply(msg2: telebot.types.Message) -> None:
+                if msg2.text and msg2.text.isdigit():
+                    cancel_newsletter(int(msg2.text))
+                    bot.send_message(msg2.chat.id, "OK")
+                else:
+                    bot.send_message(msg2.chat.id, "Некорректный id")
+
+            bot.register_next_step_handler(msg, _id_reply)
+            return
+        cancel_newsletter(int(parts[1]))
+        bot.send_message(message.chat.id, "OK")
+
+    @bot.message_handler(commands=["nl_show"])
+    @admin_only
+    def cmd_nl_show(message: telebot.types.Message) -> None:
+        parts = message.text.split()
+        if len(parts) < 2 or not parts[1].isdigit():
+            rows = list_all_newsletters()
+            if rows:
+                lines = []
+                for row in rows:
+                    dt = (row[1] or "").replace("T", " ")
+                    preview = (row[4] or "").replace("\n", " ")[:30]
+                    lines.append(
+                        f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb"
+                    )
+                bot.send_message(message.chat.id, "\n".join(lines))
+            msg = bot.send_message(message.chat.id, "Укажите id рассылки")
+
+            def _id_reply(msg2: telebot.types.Message) -> None:
+                if msg2.text and msg2.text.isdigit():
+                    content = get_newsletter_content(int(msg2.text))
+                    if not content:
+                        bot.send_message(msg2.chat.id, "не найдено")
+                    else:
+                        bot.send_message(msg2.chat.id, content, parse_mode="HTML")
+                else:
+                    bot.send_message(msg2.chat.id, "Некорректный id")
+
+            bot.register_next_step_handler(msg, _id_reply)
+            return
+        content = get_newsletter_content(int(parts[1]))
+        if not content:
+            bot.send_message(message.chat.id, "не найдено")
+        else:
+            bot.send_message(message.chat.id, content, parse_mode="HTML")
 
