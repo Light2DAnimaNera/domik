@@ -18,6 +18,7 @@ from .newsletter import (
     set_schedule,
     send_now,
     schedule_newsletter,
+    AUDIENCE_OPTIONS,
 )
 
 
@@ -65,6 +66,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             audience = int(call.data.split("_")[1])
             logger.info("Selected audience %s for user %s", audience, call.from_user.username)
             start_newsletter(call.from_user.id, audience)
+            option_text = AUDIENCE_OPTIONS[audience - 1]
+            bot.send_message(call.message.chat.id, f"выбран вариант {option_text}")
             msg = bot.send_message(call.message.chat.id, "Пришлите пост для рассылки")
 
             def _draft_reply(post: telebot.types.Message) -> None:
