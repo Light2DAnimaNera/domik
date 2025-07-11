@@ -32,10 +32,19 @@ AUDIENCE_OPTIONS = [
 
 
 def show_audience_keyboard(bot: telebot.TeleBot, chat_id: int) -> telebot.types.Message:
-    markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    markup.row("1", "2")
-    markup.row("3", "4")
-    markup.row("5")
+    """Show inline keyboard for audience selection."""
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.row(
+        telebot.types.InlineKeyboardButton("1", callback_data="aud_1"),
+        telebot.types.InlineKeyboardButton("2", callback_data="aud_2"),
+    )
+    markup.row(
+        telebot.types.InlineKeyboardButton("3", callback_data="aud_3"),
+        telebot.types.InlineKeyboardButton("4", callback_data="aud_4"),
+    )
+    markup.row(
+        telebot.types.InlineKeyboardButton("5", callback_data="aud_5"),
+    )
     text_lines = [f"{i + 1}. «{option}»" for i, option in enumerate(AUDIENCE_OPTIONS)]
     text = "Выберите аудиторию:\n" + "\n".join(text_lines)
     return bot.send_message(chat_id, text, reply_markup=markup)
