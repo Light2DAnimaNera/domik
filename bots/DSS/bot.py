@@ -5,6 +5,9 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT3)
 ds_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT1)
 
 from .handlers import register_handlers
+from .bot_commands import setup_default_commands
+
+setup_default_commands(bot)
 register_handlers(bot)
 
 def main() -> None:

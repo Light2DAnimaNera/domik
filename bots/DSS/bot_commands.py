@@ -6,7 +6,7 @@ def setup_default_commands(bot: telebot.TeleBot) -> None:
         [
             telebot.types.BotCommand("start", "Запуск"),
             telebot.types.BotCommand("nl_list", "Список рассылок"),
-            telebot.types.BotCommand("nl_cancel", "Отменить рассылку"),
-            telebot.types.BotCommand("nl_show", "Показать рассылку"),
+            telebot.types.BotCommand("nl_cancel", "Отменить рассылку <id>"),
+            telebot.types.BotCommand("nl_show", "Показать рассылку <id>"),
         ]
     )
