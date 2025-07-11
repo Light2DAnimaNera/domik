@@ -57,6 +57,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.callback_query_handler(func=lambda c: c.data.startswith("aud_") or c.data in {"draft_ok", "draft_edit", "send_now", "send_later"})
     def newsletter_callbacks(call: telebot.types.CallbackQuery) -> None:
         bot.answer_callback_query(call.id)
+        try:
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
+        except Exception:
+            pass
         if call.data.startswith("aud_"):
             audience = int(call.data.split("_")[1])
             logger.info("Selected audience %s for user %s", audience, call.from_user.username)
