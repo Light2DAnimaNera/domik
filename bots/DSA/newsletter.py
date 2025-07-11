@@ -53,6 +53,20 @@ def show_audience_keyboard(bot: telebot.TeleBot, chat_id: int) -> telebot.types.
 def start_newsletter(user_id: int, audience: int) -> None:
     """Запомнить выбранную аудиторию."""
     logger.info("Start newsletter uid=%s audience=%s", user_id, audience)
+
+    # отменить предыдущую незавершенную рассылку
+    old = _drafts.get(user_id)
+    if old:
+        logger.info("Cancel unfinished newsletter uid=%s", user_id)
+        old_id = old.get("db_id")
+        if old_id:
+            with get_connection() as conn:
+                conn.execute(
+                    "UPDATE newsletters SET status='canceled' WHERE id=?",
+                    (old_id,),
+                )
+                conn.commit()
+
     _drafts[user_id] = {"audience": audience}
     with get_connection() as conn:
         cursor = conn.cursor()
