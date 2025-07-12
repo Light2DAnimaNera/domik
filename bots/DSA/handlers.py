@@ -110,8 +110,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             def _schedule_reply(msg2: telebot.types.Message) -> None:
                 dt = parse_schedule(msg2.text)
                 tz = ZoneInfo("Europe/Moscow")
-                if not dt or dt < datetime.now(tz):
+                if not dt:
                     bot.send_message(msg2.chat.id, "Неверный формат. Попробуйте ещё раз")
+                    bot.register_next_step_handler(msg2, _schedule_reply)
+                    return
+                if dt <= datetime.now(tz):
+                    bot.send_message(msg2.chat.id, "введенное время уже истекло")
                     bot.register_next_step_handler(msg2, _schedule_reply)
                     return
                 logger.info("Scheduled newsletter from %s at %s", msg2.from_user.username, dt.isoformat())
