@@ -235,14 +235,20 @@ def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Me
             logger.warning("Failed to send message to %s", user_id)
 
 
-def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> None:
-    """Отправить текстовую рассылку указанной аудитории."""
+def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> int:
+    """Отправить текстовую рассылку указанной аудитории.
+
+    Возвращает количество пользователей, которым сообщение удалось отправить.
+    """
+    count = 0
     for user_id in _resolve_audience(audience):
         try:
             logger.debug("Sending text to %s", user_id)
             bot.send_message(user_id, text, parse_mode="HTML")
+            count += 1
         except Exception:
             logger.warning("Failed to send message to %s", user_id)
+    return count
 
 
 def send_now(bot: telebot.TeleBot, user_id: int) -> None:
@@ -290,7 +296,7 @@ def _newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | No
 
             for newsletter_id, audience, content in rows:
                 logging.info("Sending scheduled newsletter %s to %s", newsletter_id, audience)
-                _send_text_to_audience(bot, audience, content or "")
+                sent_count = _send_text_to_audience(bot, audience, content or "")
                 with get_connection() as conn:
                     conn.execute(
                         "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
@@ -300,7 +306,10 @@ def _newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | No
                 if notify_bot:
                     for chat_id in DSA_REPORT_CHAT_IDS:
                         try:
-                            notify_bot.send_message(chat_id, f"рассылка с id={newsletter_id} отправлена")
+                            notify_bot.send_message(
+                                chat_id,
+                                f"рассылка с id={newsletter_id} отправлена, оповещено {sent_count} пользователей",
+                            )
                         except Exception:
                             logging.exception("Failed to notify chat %s", chat_id)
         except Exception:
