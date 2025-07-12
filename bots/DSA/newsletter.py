@@ -95,10 +95,12 @@ def save_draft(user_id: int, message: telebot.types.Message) -> None:
             image_id = message.photo[-1].file_id
             try:
                 ds_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT1)
-                copy = ds_bot.copy_message(user_id, message.chat.id, message.message_id)
-                if copy.photo:
-                    image_id = copy.photo[-1].file_id
-                ds_bot.delete_message(user_id, copy.message_id)
+                file_info = message.bot.get_file(image_id)
+                file_bytes = message.bot.download_file(file_info.file_path)
+                sent = ds_bot.send_photo(user_id, file_bytes)
+                if sent.photo:
+                    image_id = sent.photo[-1].file_id
+                ds_bot.delete_message(user_id, sent.message_id)
             except Exception:
                 logger.exception("Failed to get DS file id")
         with get_connection() as conn:
