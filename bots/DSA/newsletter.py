@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from shared.database import get_connection
-from shared.env import DSA_REPORT_CHAT_IDS
+from shared.env import DSA_REPORT_CHAT_IDS, TELEGRAM_TOKEN_BOT1
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -93,6 +93,14 @@ def save_draft(user_id: int, message: telebot.types.Message) -> None:
         image_id = None
         if message.photo:
             image_id = message.photo[-1].file_id
+            try:
+                ds_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT1)
+                copy = ds_bot.copy_message(user_id, message.chat.id, message.message_id)
+                if copy.photo:
+                    image_id = copy.photo[-1].file_id
+                ds_bot.delete_message(user_id, copy.message_id)
+            except Exception:
+                logger.exception("Failed to get DS file id")
         with get_connection() as conn:
             conn.execute(
                 "UPDATE newsletters SET content=?, image_path=? WHERE id=?",
