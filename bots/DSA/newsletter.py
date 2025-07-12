@@ -346,14 +346,28 @@ def list_pending_newsletters() -> list[tuple]:
         return cursor.fetchall()
 
 
-def cancel_newsletter(newsletter_id: int) -> None:
-    """Set newsletter status to canceled."""
+def cancel_newsletter(newsletter_id: int) -> bool:
+    """Cancel a newsletter if possible.
+
+    Returns ``True`` when the newsletter exists and its status is neither
+    ``sent`` nor ``canceled``. In that case статус is updated to ``canceled``.
+    Otherwise returns ``False`` without modifying anything.
+    """
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT status FROM newsletters WHERE id=?",
+            (newsletter_id,),
+        )
+        row = cursor.fetchone()
+        if not row or row[0] in ("sent", "canceled"):
+            return False
+        cursor.execute(
             "UPDATE newsletters SET status='canceled' WHERE id=?",
             (newsletter_id,),
         )
         conn.commit()
+        return True
 
 
 def get_newsletter_content(newsletter_id: int) -> str | None:
