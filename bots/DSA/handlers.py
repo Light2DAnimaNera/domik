@@ -166,7 +166,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             def _id_reply(msg2: telebot.types.Message) -> None:
                 if msg2.text and msg2.text.isdigit():
                     if cancel_newsletter(int(msg2.text)):
-                        bot.send_message(msg2.chat.id, "OK")
+                        bot.send_message(
+                            msg2.chat.id,
+                            f"рассылка с {int(msg2.text)} отменена",
+                        )
                     else:
                         bot.send_message(msg2.chat.id, "ID рассылки указано не верно")
                 else:
@@ -175,7 +178,10 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.register_next_step_handler(msg, _id_reply)
             return
         if cancel_newsletter(int(parts[1])):
-            bot.send_message(message.chat.id, "OK")
+            bot.send_message(
+                message.chat.id,
+                f"рассылка с {int(parts[1])} отменена",
+            )
         else:
             bot.send_message(message.chat.id, "ID рассылки указано не верно")
 
