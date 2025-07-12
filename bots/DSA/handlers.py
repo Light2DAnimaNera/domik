@@ -168,7 +168,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                     if cancel_newsletter(int(msg2.text)):
                         bot.send_message(
                             msg2.chat.id,
-                            f"рассылка с {int(msg2.text)} отменена",
+                            f"рассылка {int(msg2.text)} отменена",
                         )
                     else:
                         bot.send_message(msg2.chat.id, "ID рассылки указано не верно")
@@ -180,7 +180,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if cancel_newsletter(int(parts[1])):
             bot.send_message(
                 message.chat.id,
-                f"рассылка с {int(parts[1])} отменена",
+                f"рассылка {int(parts[1])} отменена",
             )
         else:
             bot.send_message(message.chat.id, "ID рассылки указано не верно")
