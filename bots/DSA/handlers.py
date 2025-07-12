@@ -114,7 +114,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                     bot.send_message(msg2.chat.id, "Неверный формат. Попробуйте ещё раз")
                     bot.register_next_step_handler(msg2, _schedule_reply)
                     return
-                if dt <= datetime.now(tz):
+                now_moscow = datetime.now(tz)
+                if dt <= now_moscow:
                     bot.send_message(msg2.chat.id, "введенное время уже истекло")
                     bot.register_next_step_handler(msg2, _schedule_reply)
                     return
