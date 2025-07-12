@@ -19,7 +19,7 @@ from .newsletter import (
     send_now,
     schedule_newsletter,
     AUDIENCE_OPTIONS,
-    list_all_newsletters,
+    list_pending_newsletters,
     cancel_newsletter,
     get_newsletter_content,
 )
@@ -145,7 +145,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.message_handler(commands=["nl_list"])
     @admin_only
     def cmd_nl_list(message: telebot.types.Message) -> None:
-        rows = list_all_newsletters()
+        rows = list_pending_newsletters()
         if not rows:
             bot.send_message(message.chat.id, "список пуст")
             return
@@ -161,16 +161,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def cmd_nl_cancel(message: telebot.types.Message) -> None:
         parts = message.text.split()
         if len(parts) < 2 or not parts[1].isdigit():
-            rows = list_all_newsletters()
-            if rows:
-                lines = []
-                for row in rows:
-                    dt = (row[1] or "").replace("T", " ")
-                    preview = (row[4] or "").replace("\n", " ")[:30]
-                    lines.append(
-                        f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb"
-                    )
-                bot.send_message(message.chat.id, "\n".join(lines))
             msg = bot.send_message(message.chat.id, "Укажите id рассылки")
 
             def _id_reply(msg2: telebot.types.Message) -> None:
@@ -190,16 +180,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
     def cmd_nl_show(message: telebot.types.Message) -> None:
         parts = message.text.split()
         if len(parts) < 2 or not parts[1].isdigit():
-            rows = list_all_newsletters()
-            if rows:
-                lines = []
-                for row in rows:
-                    dt = (row[1] or "").replace("T", " ")
-                    preview = (row[4] or "").replace("\n", " ")[:30]
-                    lines.append(
-                        f"[{row[0]}] {dt} {row[2]} {row[3]} \u00ab{preview}\u00bb"
-                    )
-                bot.send_message(message.chat.id, "\n".join(lines))
             msg = bot.send_message(message.chat.id, "Укажите id рассылки")
 
             def _id_reply(msg2: telebot.types.Message) -> None:
