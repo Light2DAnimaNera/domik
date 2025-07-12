@@ -75,7 +75,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             def _draft_reply(post: telebot.types.Message) -> None:
                 logger.info("Draft saved from %s", post.from_user.username)
-                save_draft(post.from_user.id, post)
+                save_draft(bot, post.from_user.id, post)
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.row(
                     telebot.types.InlineKeyboardButton("\u0414\u0430\u043b\u0435\u0435", callback_data="draft_ok"),
@@ -137,7 +137,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             def _draft_reply(post: telebot.types.Message) -> None:
                 logger.info("Draft updated by %s", post.from_user.username)
-                save_draft(post.from_user.id, post)
+                save_draft(bot, post.from_user.id, post)
                 markup = telebot.types.InlineKeyboardMarkup()
                 markup.row(
                     telebot.types.InlineKeyboardButton("\u0414\u0430\u043b\u0435\u0435", callback_data="draft_ok"),

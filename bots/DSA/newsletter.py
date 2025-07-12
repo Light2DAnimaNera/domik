@@ -82,7 +82,9 @@ def start_newsletter(user_id: int, audience: int) -> None:
         _drafts[user_id]["db_id"] = cursor.lastrowid
 
 
-def save_draft(user_id: int, message: telebot.types.Message) -> None:
+def save_draft(
+    bot: telebot.TeleBot, user_id: int, message: telebot.types.Message
+) -> None:
     """Сохранить черновик сообщения."""
     logger.info("Saving draft for uid=%s", user_id)
     draft_data = _drafts.setdefault(user_id, {})
@@ -95,8 +97,8 @@ def save_draft(user_id: int, message: telebot.types.Message) -> None:
             image_id = message.photo[-1].file_id
             try:
                 ds_bot = telebot.TeleBot(TELEGRAM_TOKEN_BOT1)
-                file_info = message.bot.get_file(image_id)
-                file_bytes = message.bot.download_file(file_info.file_path)
+                file_info = bot.get_file(image_id)
+                file_bytes = bot.download_file(file_info.file_path)
                 sent = ds_bot.send_photo(user_id, file_bytes)
                 if sent.photo:
                     image_id = sent.photo[-1].file_id
