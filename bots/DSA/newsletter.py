@@ -331,6 +331,21 @@ def list_all_newsletters() -> list[tuple]:
         return cursor.fetchall()
 
 
+def list_pending_newsletters() -> list[tuple]:
+    """Return newsletters that have not been sent or canceled."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, COALESCE(scheduled_at, created_at) AS dt, audience, status, content
+            FROM newsletters
+            WHERE status != 'sent' AND status != 'canceled'
+            ORDER BY id DESC
+            """,
+        )
+        return cursor.fetchall()
+
+
 def cancel_newsletter(newsletter_id: int) -> None:
     """Set newsletter status to canceled."""
     with get_connection() as conn:
