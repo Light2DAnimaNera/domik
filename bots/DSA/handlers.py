@@ -165,15 +165,19 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             def _id_reply(msg2: telebot.types.Message) -> None:
                 if msg2.text and msg2.text.isdigit():
-                    cancel_newsletter(int(msg2.text))
-                    bot.send_message(msg2.chat.id, "OK")
+                    if cancel_newsletter(int(msg2.text)):
+                        bot.send_message(msg2.chat.id, "OK")
+                    else:
+                        bot.send_message(msg2.chat.id, "ID рассылки указано не верно")
                 else:
                     bot.send_message(msg2.chat.id, "Некорректный id")
 
             bot.register_next_step_handler(msg, _id_reply)
             return
-        cancel_newsletter(int(parts[1]))
-        bot.send_message(message.chat.id, "OK")
+        if cancel_newsletter(int(parts[1])):
+            bot.send_message(message.chat.id, "OK")
+        else:
+            bot.send_message(message.chat.id, "ID рассылки указано не верно")
 
     @bot.message_handler(commands=["nl_show"])
     @admin_only
