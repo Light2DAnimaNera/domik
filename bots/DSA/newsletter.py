@@ -85,16 +85,21 @@ def start_newsletter(user_id: int, audience: int) -> None:
 def save_draft(user_id: int, message: telebot.types.Message) -> None:
     """Сохранить черновик сообщения."""
     logger.info("Saving draft for uid=%s", user_id)
-    _drafts.setdefault(user_id, {})["draft"] = message
-    newsletter_id = _drafts[user_id].get("db_id")
+    draft_data = _drafts.setdefault(user_id, {})
+    draft_data["draft"] = message
+    newsletter_id = draft_data.get("db_id")
     if newsletter_id:
         content = message.html_text or message.text or message.caption or ""
+        image_id = None
+        if message.photo:
+            image_id = message.photo[-1].file_id
         with get_connection() as conn:
             conn.execute(
-                "UPDATE newsletters SET content=? WHERE id=?",
-                (content, newsletter_id),
+                "UPDATE newsletters SET content=?, image_path=? WHERE id=?",
+                (content, image_id, newsletter_id),
             )
             conn.commit()
+        draft_data["image_id"] = image_id
 
 
 def get_draft(user_id: int) -> telebot.types.Message | None:
@@ -113,6 +118,7 @@ def clear_draft(user_id: int) -> None:
                 )
                 conn.commit()
         _drafts[user_id].pop("draft", None)
+        _drafts[user_id].pop("image_id", None)
 
 
 def parse_schedule(text: str) -> datetime | None:
@@ -235,16 +241,21 @@ def _send_to_audience(bot: telebot.TeleBot, audience: int, msg: telebot.types.Me
             logger.warning("Failed to send message to %s", user_id)
 
 
-def _send_text_to_audience(bot: telebot.TeleBot, audience: str, text: str) -> int:
-    """Отправить текстовую рассылку указанной аудитории.
+def _send_newsletter_to_audience(
+    bot: telebot.TeleBot, audience: str, text: str, image: str | None
+) -> int:
+    """Отправить рассылку указанной аудитории.
 
     Возвращает количество пользователей, которым сообщение удалось отправить.
     """
     count = 0
     for user_id in _resolve_audience(audience):
         try:
-            logger.debug("Sending text to %s", user_id)
-            bot.send_message(user_id, text, parse_mode="HTML")
+            logger.debug("Sending post to %s", user_id)
+            if image:
+                bot.send_photo(user_id, image, caption=text or None, parse_mode="HTML")
+            else:
+                bot.send_message(user_id, text, parse_mode="HTML")
             count += 1
         except Exception:
             logger.warning("Failed to send message to %s", user_id)
@@ -287,16 +298,16 @@ def _newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | No
                 cursor = conn.cursor()
                 cursor.execute(
                     """
-                    SELECT id, audience, content FROM newsletters
+                    SELECT id, audience, content, image_path FROM newsletters
                     WHERE status='scheduled' AND scheduled_at<=?
                     """,
                     (now_iso,),
                 )
                 rows = cursor.fetchall()
 
-            for newsletter_id, audience, content in rows:
+            for newsletter_id, audience, content, image_path in rows:
                 logging.info("Sending scheduled newsletter %s to %s", newsletter_id, audience)
-                sent_count = _send_text_to_audience(bot, audience, content or "")
+                sent_count = _send_newsletter_to_audience(bot, audience, content or "", image_path)
                 with get_connection() as conn:
                     conn.execute(
                         "UPDATE newsletters SET status='sent', sent_at=? WHERE id=?",
@@ -386,13 +397,15 @@ def cancel_newsletter(newsletter_id: int) -> bool:
         return True
 
 
-def get_newsletter_content(newsletter_id: int) -> str | None:
-    """Return saved newsletter content."""
+def get_newsletter_content(newsletter_id: int) -> tuple[str | None, str | None]:
+    """Return saved newsletter content and image file id."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT content FROM newsletters WHERE id=?",
+            "SELECT content, image_path FROM newsletters WHERE id=?",
             (newsletter_id,),
         )
         row = cursor.fetchone()
-        return row[0] if row else None
+        if not row:
+            return None, None
+        return row[0], row[1]
