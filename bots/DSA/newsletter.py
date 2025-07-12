@@ -303,13 +303,20 @@ def _newsletter_scheduler(bot: telebot.TeleBot, notify_bot: telebot.TeleBot | No
                         (datetime.now(tz).isoformat(), newsletter_id),
                     )
                     conn.commit()
+
+                notification = (
+                    f"рассылка с id={newsletter_id} отправлена, оповещено {sent_count} пользователей"
+                )
                 if notify_bot:
                     for chat_id in DSA_REPORT_CHAT_IDS:
                         try:
-                            notify_bot.send_message(
-                                chat_id,
-                                f"рассылка с id={newsletter_id} отправлена, оповещено {sent_count} пользователей",
-                            )
+                            notify_bot.send_message(chat_id, notification)
+                        except Exception:
+                            logging.exception("Failed to notify chat %s", chat_id)
+                elif DSA_REPORT_CHAT_IDS:
+                    for chat_id in DSA_REPORT_CHAT_IDS:
+                        try:
+                            bot.send_message(chat_id, notification)
                         except Exception:
                             logging.exception("Failed to notify chat %s", chat_id)
         except Exception:
