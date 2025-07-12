@@ -199,19 +199,25 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             def _id_reply(msg2: telebot.types.Message) -> None:
                 if msg2.text and msg2.text.isdigit():
-                    content = get_newsletter_content(int(msg2.text))
-                    if not content:
+                    text, image = get_newsletter_content(int(msg2.text))
+                    if not text and not image:
                         bot.send_message(msg2.chat.id, "не найдено")
                     else:
-                        bot.send_message(msg2.chat.id, content, parse_mode="HTML")
+                        if image:
+                            bot.send_photo(msg2.chat.id, image, caption=text or None, parse_mode="HTML")
+                        else:
+                            bot.send_message(msg2.chat.id, text or "", parse_mode="HTML")
                 else:
                     bot.send_message(msg2.chat.id, "Некорректный id")
 
             bot.register_next_step_handler(msg, _id_reply)
             return
-        content = get_newsletter_content(int(parts[1]))
-        if not content:
+        text, image = get_newsletter_content(int(parts[1]))
+        if not text and not image:
             bot.send_message(message.chat.id, "не найдено")
         else:
-            bot.send_message(message.chat.id, content, parse_mode="HTML")
+            if image:
+                bot.send_photo(message.chat.id, image, caption=text or None, parse_mode="HTML")
+            else:
+                bot.send_message(message.chat.id, text or "", parse_mode="HTML")
 
