@@ -228,7 +228,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.send_message(message.chat.id, "⚠️ СЕССИЯ НЕ ЗАПУЩЕНА\nСначала начните сессию командой /begin.")
             return
         SessionManager.mark_closing(message.from_user.id)
-        summary, full_text = make_summary(row["id"])
+        prev_summary = SessionManager.session_summary(row["id"])
+        summary, full_text = make_summary(row["id"], prev_summary)
         end_time = SessionManager.close(message.from_user.id, summary)
         print(full_text)
         bot.send_message(message.chat.id, "✅ СЕССИЯ ЗАВЕРШЕНА\nДля новой сессии используйте /begin.")
