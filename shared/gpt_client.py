@@ -188,10 +188,27 @@ class GptClient:
             logging.warning("GPT error: %s", exc)
             return "❗ СИСТЕМНЫЙ СБОЙ\nПодождите и повторите запрос.", {}
 
-    def make_summary(self, full_text: str) -> str:
+    def make_summary(self, previous_summary: str, session_history: str) -> str:
+        prompt = f"""
+Тебе даны:
+1. Конспект предыдущей сессии (summary), если был.
+2. Полная история новой сессии (сообщения в формате [MM-DD-YY HH-MM] ...).
+
+Обогати предыдущий конспект новыми фактами из новой истории и выведи обновлённый summary по установленной структуре.
+
+======
+[PREVIOUS_SUMMARY_START]
+{previous_summary if previous_summary else '—'}
+[PREVIOUS_SUMMARY_END]
+
+[SESSION_HISTORY_START]
+{session_history}
+[SESSION_HISTORY_END]
+"""
+
         messages = [
             {"role": "system", "content": SUMMARY_PROMPT},
-            {"role": "user", "content": full_text},
+            {"role": "user", "content": prompt},
         ]
         try:
             response = self._client.chat.completions.create(

@@ -106,7 +106,8 @@ class SessionManager:
             if not row:
                 continue
             from .summarizer import make_summary
-            summary, _ = make_summary(row["id"])
+            prev_summary = self.session_summary(row["id"])
+            summary, _ = make_summary(row["id"], prev_summary)
             end_time = self.close(uid, summary)
             try:
                 bot.send_message(uid, "⌛ СЕССИЯ ЗАВЕРШЕНА\nПревышено время ожидания ответа. Начните новую сессию командой /begin.")

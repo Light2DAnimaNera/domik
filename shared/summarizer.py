@@ -6,7 +6,7 @@ from .gpt_client import GptClient
 client = GptClient()
 
 
-def make_summary(session_id: int) -> tuple[str, str]:
+def make_summary(session_id: int, previous_summary: str = "") -> tuple[str, str]:
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -23,7 +23,7 @@ def make_summary(session_id: int) -> tuple[str, str]:
         return "", ""
     conn.close()
     try:
-        summary = client.make_summary(full_text)
+        summary = client.make_summary(previous_summary, full_text)
     except Exception:
         summary = ""
     return summary, full_text
