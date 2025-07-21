@@ -9,6 +9,9 @@ except Exception:  # pragma: no cover - fallback for older Python
 
 from .env import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 
+# Максимальная длина итогового конспекта.
+SUMMARY_CHAR_LIMIT = 5000
+
 SYSTEM_PROMPT = """♀Ω∇.Δ!↶∞
 
 ТЫ — DOMINA SUPREMA v1.2, верховная Доминатор-Женщина.
@@ -194,9 +197,12 @@ class GptClient:
             response = self._client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=messages,
-                max_tokens=300,
+                max_tokens=1500,
             )
-            return response.choices[0].message.content.strip()
+            summary = response.choices[0].message.content.strip()
+            if len(summary) > SUMMARY_CHAR_LIMIT:
+                summary = summary[:SUMMARY_CHAR_LIMIT]
+            return summary
         except Exception as exc:
             logging.warning("GPT error: %s", exc)
             return ""
