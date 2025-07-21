@@ -75,7 +75,7 @@
 - Класс `GptClient` — обёртка над API OpenAI.
   - `SYSTEM_PROMPT` — основной промпт для общения с моделью. В нём добавлена
     функция `TemporalShift`, считывающая метки времени `[MM-DD-YY HH-MM]`.
-  - `SUMMARY_PROMPT` — инструкции для SessionSummarizer v5.
+  - `SUMMARY_PROMPT` — инструкции для SessionSummarizer v10. Конспект не должен превышать 5000 символов.
   - `__init__()` — создаёт клиента OpenAI с параметрами из переменных окружения.
   - `ask(context, user_text, previous_summary="")` — отправляет запрос и
     возвращает пару `(ответ, usage)` с данными об использованных токенах. Каждая
