@@ -4,6 +4,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from shared.env import ADMIN_USERNAMES
+from shared.credits import get_token_coeff, set_token_coeff
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,39 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         logger.info("/report from %s", message.from_user.username)
         report = format_daily_report(date.today())
         bot.send_message(message.chat.id, report)
+
+    @bot.message_handler(commands=["coeff"])
+    @admin_only
+    def cmd_coeff(message: telebot.types.Message) -> None:
+        logger.info("/coeff from %s", message.from_user.username)
+        bot.send_message(message.chat.id, f"текущий коэффициент: {get_token_coeff()}")
+
+    @bot.message_handler(commands=["set_coeff"])
+    @admin_only
+    def cmd_set_coeff(message: telebot.types.Message) -> None:
+        logger.info("/set_coeff from %s", message.from_user.username)
+        parts = message.text.split()
+
+        def _coeff_reply(msg2: telebot.types.Message) -> None:
+            try:
+                val = float((msg2.text or "").replace(",", "."))
+                set_token_coeff(val)
+                bot.send_message(msg2.chat.id, f"коэффициент обновлен: {val}")
+            except Exception:
+                msg3 = bot.send_message(msg2.chat.id, "Некорректное значение. Попробуйте ещё раз.")
+                bot.register_next_step_handler(msg3, _coeff_reply)
+
+        if len(parts) >= 2:
+            try:
+                val = float(parts[1].replace(",", "."))
+                set_token_coeff(val)
+                bot.send_message(message.chat.id, f"коэффициент обновлен: {val}")
+            except Exception:
+                bot.send_message(message.chat.id, "Некорректное значение")
+            return
+
+        msg = bot.send_message(message.chat.id, "Укажите новое значение коэффициента")
+        bot.register_next_step_handler(msg, _coeff_reply)
 
     @bot.message_handler(commands=["newsletter"])
     @admin_only

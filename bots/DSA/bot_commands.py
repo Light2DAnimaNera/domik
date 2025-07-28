@@ -6,6 +6,8 @@ def setup_default_commands(bot: telebot.TeleBot) -> None:
         [
             telebot.types.BotCommand("start", "Начать"),
             telebot.types.BotCommand("report", "Отчет за сегодня"),
+            telebot.types.BotCommand("coeff", "Показать коэффициент"),
+            telebot.types.BotCommand("set_coeff", "Изменить коэффициент"),
             telebot.types.BotCommand("newsletter", "Рассылка"),
             telebot.types.BotCommand("nl_list", "Список рассылок"),
             telebot.types.BotCommand("nl_cancel", "Отменить рассылку <id>"),
