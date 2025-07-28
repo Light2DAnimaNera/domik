@@ -1,6 +1,5 @@
 import telebot
 from telebot import types
-from .bot import ds_bot
 
 from shared.env import DSS_FORUM_ID
 from shared.models import (
@@ -73,12 +72,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             return
         if message.reply_to_message and message.reply_to_message.id in _reply_map:
             chat_id, reply_id = _reply_map[message.reply_to_message.id]
-            ds_bot.copy_message(
+            bot.copy_message(
                 chat_id,
                 message.chat.id,
                 message.id,
                 reply_to_message_id=reply_id,
             )
         else:
-            ds_bot.copy_message(user_id, message.chat.id, message.id)
+            bot.copy_message(user_id, message.chat.id, message.id)
 
